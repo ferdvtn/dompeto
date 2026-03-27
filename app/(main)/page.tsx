@@ -70,19 +70,6 @@ export default function Dashboard() {
 		}).format(amount)
 	}
 
-	if (loading) {
-		return (
-			<div className="p-4 space-y-6">
-				<Skeleton className="h-40 w-full rounded-2xl" />
-				<div className="grid grid-cols-2 gap-4">
-					<Skeleton className="h-24 rounded-2xl" />
-					<Skeleton className="h-24 rounded-2xl" />
-				</div>
-				<Skeleton className="h-64 w-full rounded-2xl" />
-			</div>
-		)
-	}
-
 	return (
 		<div className="p-4 pb-24 space-y-6">
 			{/* Header */}
@@ -108,8 +95,12 @@ export default function Dashboard() {
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<div className="text-xl font-black italic tracking-tight">
-						{formatIDR(data?.balance || 0)}
+					<div className="text-xl font-black italic tracking-tight min-h-[28px]">
+						{loading ? (
+							<Skeleton className="h-7 w-32 bg-slate-800/40" />
+						) : (
+							formatIDR(data?.balance || 0)
+						)}
 					</div>
 					<div className="mt-3 flex items-center gap-2 text-[9px] font-bold bg-emerald-500/10 text-emerald-400 w-fit px-2.5 py-0.5 rounded-full border border-emerald-500/20 uppercase tracking-wider">
 						<ArrowUpRight className="w-2.5 h-2.5" />
@@ -125,8 +116,12 @@ export default function Dashboard() {
 						<div className="flex items-center gap-2 text-slate-500 text-[9px] font-bold uppercase tracking-widest">
 							<TrendingDown className="w-2.5 h-2.5 text-red-400" /> Hari Ini
 						</div>
-						<div className="text-sm font-black italic text-red-500/90">
-							{formatIDR(data?.spentToday || 0)}
+						<div className="text-sm font-black italic text-red-500/90 min-h-[20px]">
+							{loading ? (
+								<Skeleton className="h-5 w-24 bg-slate-800/40" />
+							) : (
+								formatIDR(data?.spentToday || 0)
+							)}
 						</div>
 					</CardContent>
 				</Card>
@@ -135,11 +130,17 @@ export default function Dashboard() {
 						<div className="flex items-center gap-2 text-slate-500 text-[9px] font-bold uppercase tracking-widest">
 							Jumlah
 						</div>
-						<div className="text-lg font-black italic text-slate-100">
-							{data?.countToday || 0}
-							<span className="text-[8px] font-bold text-slate-500 ml-2 uppercase not-italic">
-								kali
-							</span>
+						<div className="text-lg font-black italic text-slate-100 flex items-center gap-2 min-h-[28px]">
+							{loading ? (
+								<Skeleton className="h-7 w-12 bg-slate-800/40" />
+							) : (
+								<>
+									{data?.countToday || 0}
+									<span className="text-[8px] font-bold text-slate-500 uppercase not-italic">
+										kali
+									</span>
+								</>
+							)}
 						</div>
 					</CardContent>
 				</Card>
@@ -161,7 +162,11 @@ export default function Dashboard() {
 				</div>
 
 				<div className="space-y-3">
-					{data?.latestTransactions?.length === 0 ? (
+					{loading ? (
+						[...Array(3)].map((_, i) => (
+							<Skeleton key={i} className="h-16 w-full rounded-2xl bg-slate-800/30" />
+						))
+					) : data?.latestTransactions?.length === 0 ? (
 						<div className="bg-slate-900/20 border border-dashed border-white/5 rounded-2xl p-6 text-center">
 							<p className="text-slate-500 text-[10px] font-bold italic">
 								Belum ada catatan hari ini

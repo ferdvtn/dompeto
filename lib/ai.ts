@@ -81,47 +81,61 @@ ATURAN PARSING:
 	}
 }
 
+export interface IntentResult {
+	label: string
+	days: number
+	intent: "period" | "largest" | "all" | "unclear"
+}
+
 /**
- * Mendeteksi niat (intent) pengguna untuk menentukan periode data.
+ * Mendeteksi niat (intent) pengguna untuk menentukan periode data secara dinamis.
  */
-export async function detectIntent(message: string): Promise<string> {
+export async function detectIntent(message: string): Promise<IntentResult> {
 	const systemInstruction = `
-Tugas: Klasifikasikan maksud periode waktu dari pesan pengguna hanya ke dalam salah satu label di bawah.
+Tugas: Analisis maksud periode waktu dari pesan pengguna dan kembalikan JSON.
 
-LABEL & KATA KUNCI:
-- today: hari ini, tadi, barusan, pengeluaran sekarang, hari ini habis berapa
-- this_week: minggu ini, sepekan ini, 7 hari terakhir, seminggu, hari-hari ini
-- last_month: bulan lalu, sebulan yang lalu, bulan kemarin
-- largest: terbesar, paling mahal, paling banyak, boros di mana, top 5, belanja paling gede
-- current_month: (default jika tidak ada di atas) bulan ini, laporan, ringkasan, rekap
+EKSTRAKSI:
+- "intent": "period" (untuk rentang waktu), "largest" (untuk transaksi terbesar), "all" (semua data), "unclear" (jika pesan bukan pertanyaan tentang laporan/data).
+- "days": jumlah total hari dalam angka.
+- "label": nama periode yang ramah.
 
-ATURAN:
-- Jika ada kata "hari ini", WAJIB pilih: today
-- Jika ada kata "terbesar" atau "paling", WAJIB pilih: largest
-- Kembalikan HANYA labelnya saja (lowercase).
+ATURAN PERHITUNGAN HARI:
+- "hari ini": 0 hari
+- "minggu ini/sepekan": 7 hari
+- "bulan ini": 30 hari
+- Kalkulasikan total hari jika ada angka (misal: "3 hari", "2 minggu").
 
-Pesan Pengguna: "${message}"
-Label:`.trim()
+IDENTIFIKASI "UNCLEAR":
+- Jika pengguna hanya menyapa (halo, hi), bicara di luar konteks keuangan, atau perintah tidak jelas, gunakan intent: "unclear".
+
+FORMAT OUTPUT (JSON):
+{
+  "intent": "period" | "largest" | "all" | "unclear",
+  "days": <number>,
+  "label": "<string>"
+}
+`.trim()
 
 	try {
 		const chatCompletion = await groq.chat.completions.create({
-			messages: [{ role: "user", content: systemInstruction }],
+			messages: [
+				{ role: "system", content: systemInstruction },
+				{ role: "user", content: message },
+			],
 			model: "llama-3.1-8b-instant",
-			max_tokens: 10,
+			response_format: { type: "json_object" },
 			temperature: 0,
 		})
 
-		const label =
-			chatCompletion.choices[0]?.message?.content?.toLowerCase().trim() ||
-			"current_month"
+		const data = JSON.parse(chatCompletion.choices[0]?.message?.content || "{}")
 
-		if (label.includes("today")) return "today"
-		if (label.includes("this_week")) return "this_week"
-		if (label.includes("last_month")) return "last_month"
-		if (label.includes("largest")) return "largest"
-		return "current_month"
+		return {
+			label: data.label || "Bulan ini",
+			days: Number(data.days) || 30,
+			intent: data.intent || "period",
+		}
 	} catch (error) {
-		return "current_month"
+		return { label: "Bulan ini", days: 30, intent: "period" }
 	}
 }
 

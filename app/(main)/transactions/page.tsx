@@ -50,17 +50,6 @@ export default function TransactionsPage() {
 			tx.raw_input?.toLowerCase().includes(searchQuery.toLowerCase()),
 	)
 
-	if (loading) {
-		return (
-			<div className="p-4 space-y-4">
-				<Skeleton className="h-12 w-full rounded-xl bg-slate-900/50" />
-				{[1, 2, 3, 4, 5].map((i) => (
-					<Skeleton key={i} className="h-20 w-full rounded-2xl bg-slate-900/50" />
-				))}
-			</div>
-		)
-	}
-
 	return (
 		<div className="p-4 pb-24 space-y-6">
 			<div className="flex items-center gap-4">
@@ -88,7 +77,11 @@ export default function TransactionsPage() {
 
 			{/* Transactions List */}
 			<div className="space-y-3">
-				{filtered.length === 0 ? (
+				{loading ? (
+					[...Array(6)].map((_, i) => (
+						<Skeleton key={i} className="h-16 w-full rounded-2xl bg-slate-800/30" />
+					))
+				) : filtered.length === 0 ? (
 					<div className="bg-slate-950/20 border border-dashed border-white/5 rounded-2xl p-10 text-center text-slate-600">
 						<History className="w-10 h-10 mx-auto mb-3 opacity-20" />
 						<p className="text-[10px] font-black uppercase tracking-widest italic">

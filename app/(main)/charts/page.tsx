@@ -44,16 +44,6 @@ export default function ChartsPage() {
 		return "Rp " + new Intl.NumberFormat("id-ID").format(val)
 	}
 
-	if (loading) {
-		return (
-			<div className="p-4 space-y-6">
-				<Skeleton className="h-64 w-full rounded-[2rem] bg-slate-900/50" />
-				<Skeleton className="h-64 w-full rounded-[2rem] bg-slate-900/50" />
-				<Skeleton className="h-64 w-full rounded-[2rem] bg-slate-900/50" />
-			</div>
-		)
-	}
-
 	return (
 		<div className="p-4 pb-24 space-y-6">
 			<h1 className="text-2xl font-black italic text-slate-100">Analitik</h1>
@@ -62,7 +52,7 @@ export default function ChartsPage() {
 			<Card
 				className={cn(
 					"shadow-2xl rounded-[2rem] overflow-hidden backdrop-blur-md border",
-					data.cycle.spent > data.cycle.budget
+					!loading && data?.cycle?.spent > data?.cycle?.budget
 						? "bg-red-600/20 border-red-500/20 text-red-100 shadow-red-950/20"
 						: "bg-emerald-600/20 border-emerald-500/20 text-emerald-100 shadow-emerald-950/20",
 				)}
@@ -72,7 +62,9 @@ export default function ChartsPage() {
 						<CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">
 							Siklus Gaji ini
 						</CardTitle>
-						{data.cycle.spent > data.cycle.budget ? (
+						{loading ? (
+							<Skeleton className="w-4 h-4 rounded-full bg-white/10" />
+						) : !loading && data?.cycle?.spent > data?.cycle?.budget ? (
 							<AlertTriangle className="w-4 h-4 text-red-400" />
 						) : (
 							<Calendar className="w-4 h-4 opacity-50 text-emerald-400" />
@@ -82,49 +74,74 @@ export default function ChartsPage() {
 				<CardContent>
 					<div
 						className={cn(
-							"text-xl font-black italic mb-4",
-							data.cycle.spent > data.cycle.budget
+							"text-xl font-black italic mb-4 min-h-[28px]",
+							!loading && data?.cycle?.spent > data?.cycle?.budget
 								? "text-red-300"
 								: "text-emerald-300",
 						)}
 					>
-						{data.cycle.daysLeft} Hari Lagi
+						{loading ? (
+							<Skeleton className="h-7 w-24 bg-white/10" />
+						) : (
+							<>{data?.cycle?.daysLeft} Hari Lagi</>
+						)}
 					</div>
 					<div className="space-y-4">
-						<div className="flex justify-between items-center text-[10px] font-bold uppercase">
+						<div className="flex justify-between items-center text-[10px] font-bold uppercase min-h-[15px]">
 							<span
-								className={data.cycle.spent > data.cycle.budget ? "text-red-300" : ""}
+								className={
+									!loading && data?.cycle?.spent > data?.cycle?.budget
+										? "text-red-300"
+										: ""
+								}
 							>
-								{data.cycle.spent > data.cycle.budget
-									? "Anggaran Terlampaui"
-									: "Sisa Anggaran"}
+								{loading ? (
+									<Skeleton className="h-3 w-20 bg-white/10" />
+								) : !loading && data?.cycle?.spent > data?.cycle?.budget ? (
+									"Anggaran Terlampaui"
+								) : (
+									"Sisa Anggaran"
+								)}
 							</span>
-							{data.cycle.spent <= data.cycle.budget && (
-								<span>{Math.round(data.cycle.percent)}%</span>
+							{!loading && data?.cycle?.spent <= data?.cycle?.budget && (
+								<span>{Math.round(data?.cycle?.percent || 0)}%</span>
 							)}
 						</div>
 
-						{data.cycle.spent <= data.cycle.budget && (
-							<div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
-								<div
-									className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000"
-									style={{ width: `${data.cycle.percent}%` }}
-								/>
-							</div>
+						{loading ? (
+							<Skeleton className="h-3 w-full rounded-full bg-white/10" />
+						) : (
+							!loading &&
+							data?.cycle?.spent <= data?.cycle?.budget && (
+								<div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
+									<div
+										className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000"
+										style={{ width: `${data?.cycle?.percent}%` }}
+									/>
+								</div>
+							)
 						)}
 
 						<div className="flex justify-between text-[11px] font-black italic pt-1">
-							<div className="flex flex-col">
-								<span className="text-[8px] opacity-40 uppercase not-italic mb-0.5">
+							<div className="flex flex-col gap-1">
+								<span className="text-[8px] opacity-40 uppercase not-italic">
 									Terpakai
 								</span>
-								<span>{formatIDR(data.cycle.spent)}</span>
+								{loading ? (
+									<Skeleton className="h-4 w-20 bg-white/10" />
+								) : (
+									<span>{formatIDR(data?.cycle?.spent || 0)}</span>
+								)}
 							</div>
-							<div className="flex flex-col text-right">
-								<span className="text-[8px] opacity-40 uppercase not-italic mb-0.5">
+							<div className="flex flex-col text-right gap-1">
+								<span className="text-[8px] opacity-40 uppercase not-italic">
 									Limit
 								</span>
-								<span>{formatIDR(data.cycle.budget)}</span>
+								{loading ? (
+									<Skeleton className="h-4 w-20 bg-white/10 ml-auto" />
+								) : (
+									<span>{formatIDR(data?.cycle?.budget || 0)}</span>
+								)}
 							</div>
 						</div>
 					</div>
@@ -145,61 +162,69 @@ export default function ChartsPage() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<div className="h-64 w-full">
-						<ResponsiveContainer width="100%" height="100%">
-							<PieChart>
-								<Pie
-									data={data.categories}
-									cx="50%"
-									cy="50%"
-									innerRadius={60}
-									outerRadius={80}
-									paddingAngle={5}
-									dataKey="value"
-									labelLine={false}
-								>
-									{data.categories.map((_: any, index: number) => (
-										<Cell
-											key={`cell-${index}`}
-											fill={COLORS[index % COLORS.length]}
-											stroke="transparent"
+					<div className="h-64 w-full flex items-center justify-center">
+						{loading ? (
+							<Skeleton className="w-40 h-40 rounded-full bg-slate-800/20" />
+						) : (
+							<ResponsiveContainer width="100%" height="100%">
+								<PieChart>
+									<Pie
+										data={data?.categories || []}
+										cx="50%"
+										cy="50%"
+										innerRadius={60}
+										outerRadius={80}
+										paddingAngle={5}
+										dataKey="value"
+										labelLine={false}
+									>
+										{(data?.categories || []).map((_: any, index: number) => (
+											<Cell
+												key={`cell-${index}`}
+												fill={COLORS[index % COLORS.length]}
+												stroke="transparent"
+											/>
+										))}
+										<LabelList
+											dataKey="name"
+											position="outside"
+											style={{ fontSize: "9px", fontWeight: "bold", fill: "#64748b" }}
+											formatter={(val: any) => String(val || "").split(" ")[0]}
 										/>
-									))}
-									<LabelList
-										dataKey="name"
-										position="outside"
-										style={{ fontSize: "9px", fontWeight: "bold", fill: "#64748b" }}
-										formatter={(val: any) => String(val || "").split(" ")[0]}
+									</Pie>
+									<Tooltip
+										contentStyle={{
+											backgroundColor: "#0f172a",
+											borderRadius: "16px",
+											border: "1px solid rgba(255,255,255,0.05)",
+											boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+											fontSize: "12px",
+											fontWeight: "bold",
+											fontStyle: "italic",
+										}}
+										itemStyle={{ color: "#f1f5f9" }}
+										formatter={(val: any) => [formatIDR(Number(val || 0)), "Nilai"]}
 									/>
-								</Pie>
-								<Tooltip
-									contentStyle={{
-										backgroundColor: "#0f172a",
-										borderRadius: "16px",
-										border: "1px solid rgba(255,255,255,0.05)",
-										boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
-										fontSize: "12px",
-										fontWeight: "bold",
-										fontStyle: "italic",
-									}}
-									itemStyle={{ color: "#f1f5f9" }}
-									formatter={(val: any) => [formatIDR(Number(val || 0)), "Nilai"]}
-								/>
-							</PieChart>
-						</ResponsiveContainer>
+								</PieChart>
+							</ResponsiveContainer>
+						)}
 					</div>
 					<div className="grid grid-cols-2 gap-2 mt-4 px-2">
-						{data.categories.slice(0, 4).map((cat: any, i: number) => (
-							<div key={cat.name} className="flex items-center gap-2">
-								<div
-									className="w-2 rounded-full h-2"
-									style={{ backgroundColor: COLORS[i % COLORS.length] }}
-								/>
-								<span className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-tighter">
-									{cat.name}
-								</span>
-							</div>
-						))}
+						{loading
+							? [...Array(4)].map((_, i) => (
+									<Skeleton key={i} className="h-3 w-20 bg-slate-800/20 rounded" />
+								))
+							: (data?.categories || []).slice(0, 4).map((cat: any, i: number) => (
+									<div key={cat.name} className="flex items-center gap-2">
+										<div
+											className="w-2 rounded-full h-2"
+											style={{ backgroundColor: COLORS[i % COLORS.length] }}
+										/>
+										<span className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-tighter">
+											{cat.name}
+										</span>
+									</div>
+								))}
 					</div>
 				</CardContent>
 			</Card>
@@ -218,68 +243,78 @@ export default function ChartsPage() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className="h-64 w-full">
-						<ResponsiveContainer width="100%" height="100%">
-							<BarChart
-								data={data.daily}
-								margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
-							>
-								<XAxis
-									dataKey="date"
-									axisLine={false}
-									tickLine={false}
-									tick={{ fill: "#64748b", fontSize: 9, fontWeight: "bold" }}
-									className="uppercase tracking-widest"
-									tickFormatter={(val: any) =>
-										String(val || "")
-											.split("-")
-											.slice(1, 3)
-											.join("/")
-									}
+					<div className="h-64 w-full flex items-end gap-2 pb-4">
+						{loading ? (
+							[...Array(7)].map((_, i) => (
+								<Skeleton
+									key={i}
+									className="flex-1 bg-slate-800/20 rounded-t-lg"
+									style={{ height: `${20 + i * 10}%` }}
 								/>
-								<YAxis hide />
-								<Tooltip
-									cursor={{ fill: "rgba(255,255,255,0.03)" }}
-									contentStyle={{
-										backgroundColor: "#0f172a",
-										borderRadius: "16px",
-										border: "1px solid rgba(255,255,255,0.05)",
-										boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
-										fontSize: "12px",
-										fontWeight: "bold",
-										fontStyle: "italic",
-									}}
-									itemStyle={{ color: "#22d3ee" }}
-									formatter={(val: any) => [formatIDR(Number(val || 0)), "Keluar"]}
-								/>
-								<Bar
-									dataKey="amount"
-									fill="url(#barGradient)"
-									radius={[8, 8, 0, 0]}
-									barSize={28}
+							))
+						) : (
+							<ResponsiveContainer width="100%" height="100%">
+								<BarChart
+									data={data?.daily || []}
+									margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
 								>
-									<LabelList
-										dataKey="amount"
-										position="top"
-										style={{
-											fontSize: "8px",
-											fontWeight: "900",
-											fill: "#06b6d4",
-											fontStyle: "italic",
-										}}
-										formatter={(val: any) =>
-											Number(val || 0) > 0 ? `${Math.round(Number(val) / 1000)}k` : ""
+									<XAxis
+										dataKey="date"
+										axisLine={false}
+										tickLine={false}
+										tick={{ fill: "#64748b", fontSize: 9, fontWeight: "bold" }}
+										className="uppercase tracking-widest"
+										tickFormatter={(val: any) =>
+											String(val || "")
+												.split("-")
+												.slice(1, 3)
+												.join("/")
 										}
 									/>
-								</Bar>
-								<defs>
-									<linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-										<stop offset="0%" stopColor="#06b6d4" />
-										<stop offset="100%" stopColor="#06b6d4" stopOpacity={0.1} />
-									</linearGradient>
-								</defs>
-							</BarChart>
-						</ResponsiveContainer>
+									<YAxis hide />
+									<Tooltip
+										cursor={{ fill: "rgba(255,255,255,0.03)" }}
+										contentStyle={{
+											backgroundColor: "#0f172a",
+											borderRadius: "16px",
+											border: "1px solid rgba(255,255,255,0.05)",
+											boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+											fontSize: "12px",
+											fontWeight: "bold",
+											fontStyle: "italic",
+										}}
+										itemStyle={{ color: "#22d3ee" }}
+										formatter={(val: any) => [formatIDR(Number(val || 0)), "Keluar"]}
+									/>
+									<Bar
+										dataKey="amount"
+										fill="url(#barGradient)"
+										radius={[8, 8, 0, 0]}
+										barSize={28}
+									>
+										<LabelList
+											dataKey="amount"
+											position="top"
+											style={{
+												fontSize: "8px",
+												fontWeight: "900",
+												fill: "#06b6d4",
+												fontStyle: "italic",
+											}}
+											formatter={(val: any) =>
+												Number(val || 0) > 0 ? `${Math.round(Number(val) / 1000)}k` : ""
+											}
+										/>
+									</Bar>
+									<defs>
+										<linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+											<stop offset="0%" stopColor="#06b6d4" />
+											<stop offset="100%" stopColor="#06b6d4" stopOpacity={0.1} />
+										</linearGradient>
+									</defs>
+								</BarChart>
+							</ResponsiveContainer>
+						)}
 					</div>
 				</CardContent>
 			</Card>

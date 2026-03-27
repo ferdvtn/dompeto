@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { verifyPassword } from "@/lib/auth"
 
 export async function POST(req: NextRequest) {
 	try {
+		const { password } = await req.json()
+
+		if (!password || !verifyPassword(password)) {
+			return NextResponse.json({ error: "Password salah." }, { status: 401 })
+		}
+
 		// 1. Reset dynamic tables
 		await db.execute("DELETE FROM transactions")
 		await db.execute("DELETE FROM daily_stats")
