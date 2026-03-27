@@ -1,63 +1,58 @@
-# Dompeto (MVP)
+# Dompeto v2.0 (Premium Revamp)
 
-Aplikasi pelacak keuangan pribadi berbasis AI yang ringan, aman, dan tanpa biaya operasional.
+Dompeto adalah aplikasi pelacak keuangan pribadi berbasis AI yang dirancang dengan estetika **Midnight Slate**—gelap, tajam, dan modern. Menggunakan infrastruktur tanpa biaya (_zero cost_) namun memberikan pengalaman pengguna kelas premium.
 
-## Fitur Utama
+![Dashboard Preview](https://via.placeholder.com/800x400/0f172a/3b82f6?text=Dompeto+v2.0+Midnight+Slate)
 
-- **AI-Powered Input**: Catat transaksi dengan bahasa alami (misal: "bakso 10k", "gajian 5jt").
-- **Chat Laporan**: Tanya kondisi keuanganmu ke asisten AI Gemini.
-- **Mobile Friendly**: Desain responsif, nyaman digunakan di HP maupun Desktop.
-- **Zero Cost**: Menggunakan Turso (SQLite Cloud) dan Google Gemini tingkat gratis.
+## ⚡ Fitur Utama
 
-## Teknologi
+- **🧠 AI Assistant (Groq Llama 3)**: Catat transaksi hanya dengan mengetik kalimat bebas (misal: "makan siang bareng temen 50rb" atau "topup gopay 100k").
+- **💬 Chat History & Persistence**: Riwayat chat AI tersimpan aman di browser (max 50 pesan) sehingga tidak hilang saat berpindah halaman.
+- **📊 Analytics & Trends**: Visualisasi pengeluaran harian, alokasi kategori, dan pelacakan siklus gaji bulanan yang intuitif.
+- **🛡️ Protected Reset**: Keamanan ekstra dengan konfirmasi password untuk menghapus seluruh data transaksi.
+- **✨ Selective Skeleton Loading**: Transisi halaman yang mulus dan responsif dengan pemuatan data parsial berbasis _pulse animation_.
+- **🌍 Timezone Awareness**: Sinkronisasi penuh dengan Waktu Indonesia Barat (WIB/Jakarta).
 
-- Framework: Next.js (App Router)
-- Database: Turso (LibSQL)
-- AI: Groq Cloud (Llama 3)
-- Auth: JWT di HTTP-only cookie (jose)
-- Styling: Tailwind CSS
+## 🛠️ Teknologi & Stack
 
-## Persiapan
+- **Core**: Next.js 16 (App Router + Turbopack)
+- **Database**: Turso (Edge SQLite)
+- **AI Engine**: Groq Cloud (`llama-3.1-8b-instant`)
+- **Auth**: JWT with HTTP-only Cookies (jose)
+- **Styling**: Tailwind CSS & Lucide Icons
+- **Components**: Radix UI & Selective Skeletons
 
-1. Masukkan variabel lingkungan di `.env.local`:
+## 🚀 Persiapan & Instalasi
 
-   ```bash
-   APP_PASSWORD=        # Password untuk login
-   APP_JWT_SECRET=      # String acak min 32 karakter
-   TURSO_DATABASE_URL=  # URL dari Turso Dashboard
-   TURSO_AUTH_TOKEN=    # Token dari Turso Dashboard
-   GEMINI_API_KEY=      # (Opsional) API Key Gemini
-   GROQ_API_KEY=        # API Key dari console.groq.com
-   ```
+### 1. Konfigurasi Environment
 
-2. Jalankan SQL Schema di Turso:
+Buat file `.env.local` di root direktori dan isi variabel berikut:
 
-   ```sql
-   CREATE TABLE IF NOT EXISTS transactions (
-     id INTEGER PRIMARY KEY AUTOINCREMENT,
-     raw_input TEXT NOT NULL,
-     amount INTEGER NOT NULL,
-     type TEXT NOT NULL CHECK(type IN ('expense', 'income')),
-     category TEXT NOT NULL,
-     description TEXT,
-     notes TEXT,
-     created_at DATETIME DEFAULT (datetime('now', 'localtime'))
-   );
+```bash
+APP_PASSWORD=        # Password untuk akses Dashboard
+APP_JWT_SECRET=      # String acak minimal 32 karakter
+TURSO_DATABASE_URL=  # URL dari Turso Dashboard
+TURSO_AUTH_TOKEN=    # Token dari Turso Dashboard
+GROQ_API_KEY=        # API Key dari console.groq.com
+```
 
-   CREATE TABLE IF NOT EXISTS login_attempts (
-     ip TEXT PRIMARY KEY,
-     count INTEGER DEFAULT 1,
-     last_attempt DATETIME DEFAULT (datetime('now', 'localtime'))
-   );
-   ```
+### 2. Inisialisasi Database
 
-## Pengembangan Lokal
+Jalankan skrip migrasi untuk membuat tabel dan data awal:
+
+```bash
+node scripts/migrate-db.mjs
+```
+
+### 3. Jalankan Aplikasi
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Deployment
+Akses aplikasi di `http://localhost:3000`.
 
-Push ke GitHub dan hubungkan ke Vercel. Jangan lupa tambahkan Environment Variables di dashboard Vercel.
+## 📜 Lisensi
+
+Dikembangkan untuk penggunaan pribadi. Silakan fork dan sesuaikan dengan kebutuhan Anda.
