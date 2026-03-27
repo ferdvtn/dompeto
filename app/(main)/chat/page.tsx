@@ -25,16 +25,38 @@ const CHAT_SUGGESTIONS = [
 
 export default function ChatPage() {
 	const router = useRouter()
-	const [messages, setMessages] = useState<any[]>([
-		{
-			role: "assistant",
-			content:
-				"Halo! Saya asisten keuangan Dompeto. Ada yang bisa saya bantu hari ini?",
-		},
-	])
+	const [messages, setMessages] = useState<any[]>([])
 	const [input, setInput] = useState("")
 	const [loading, setLoading] = useState(false)
 	const scrollRef = useRef<HTMLDivElement>(null)
+
+	// Load history on mount
+	useEffect(() => {
+		const saved = localStorage.getItem("dompeto_chat_history")
+		if (saved) {
+			try {
+				setMessages(JSON.parse(saved))
+			} catch (e) {
+				console.error("Failed to parse chat history")
+			}
+		} else {
+			setMessages([
+				{
+					role: "assistant",
+					content:
+						"Halo! Saya asisten keuangan Dompeto. Ada yang bisa saya bantu hari ini?",
+				},
+			])
+		}
+	}, [])
+
+	// Save history on change (limit 50)
+	useEffect(() => {
+		if (messages.length > 0) {
+			const toSave = messages.slice(-50)
+			localStorage.setItem("dompeto_chat_history", JSON.stringify(toSave))
+		}
+	}, [messages])
 
 	useEffect(() => {
 		if (messages.length > 1) {
