@@ -3,7 +3,17 @@ import { db } from "@/lib/db"
 
 export async function GET() {
 	try {
-		// 1. Pie Chart: Breakdown per category (Last 30 days)
+		// 1. Get settings first
+		const settingsRes = await db.execute("SELECT key, value FROM settings")
+		const settings: { [key: string]: string } = {}
+		settingsRes.rows.forEach((row: any) => {
+			settings[row.key] = row.value
+		})
+
+		const salaryDay = Number(settings.salary_day || "25")
+		const budget = Number(settings.monthly_budget || "0")
+
+		// 2. Pie Chart: Breakdown per category (Last 30 days)
 		const pieRes = await db.execute(`
       SELECT c.name, SUM(t.amount) as value
       FROM transactions t
@@ -12,30 +22,27 @@ export async function GET() {
       GROUP BY c.name
     `)
 
-		// 2. Line Chart: Daily Trend (Last 14 days)
+		// 3. Line Chart: Daily Trend (Last 7 days)
 		const lineRes = await db.execute(`
       SELECT date(created_at) as date, SUM(amount) as amount
       FROM transactions
-      WHERE type = 'expense' AND created_at >= date('now', '-14 days')
+      WHERE type = 'expense' AND created_at >= date('now', '-7 days')
       GROUP BY date(created_at)
       ORDER BY date ASC
     `)
 
-		// 3. Bar Chart: Category vs Total (Last 30 days)
-		// Same as pie but maybe formatted differently if needed
-
-		// 4. Monthly Cycle (Salary Cycle: 25th to 25th)
+		// 4. Monthly Cycle (Salary Cycle)
 		const now = new Date()
 		let startYear = now.getFullYear()
 		let startMonth = now.getMonth() // 0-indexed
-		if (now.getDate() < 25) {
+		if (now.getDate() < salaryDay) {
 			startMonth -= 1
 			if (startMonth < 0) {
 				startMonth = 11
 				startYear -= 1
 			}
 		}
-		const cycleStart = `${startYear}-${String(startMonth + 1).padStart(2, "0")}-25`
+		const cycleStart = `${startYear}-${String(startMonth + 1).padStart(2, "0")}-${String(salaryDay).padStart(2, "0")}`
 
 		const cycleRes = await db.execute({
 			sql: `
@@ -46,19 +53,26 @@ export async function GET() {
 			args: [cycleStart],
 		})
 
-		// Get budget from settings
-		const budgetRes = await db.execute(
-			"SELECT value FROM settings WHERE key = 'monthly_budget' LIMIT 1",
-		)
-		const budget = Number(budgetRes.rows[0]?.value) || 2000000 // Default 2jt if not set
+		// Calculate days left
+		const start = new Date(startYear, startMonth, salaryDay)
+		const nextCycle = new Date(startYear, startMonth + 1, salaryDay)
+		const diffMs = nextCycle.getTime() - now.getTime()
+		const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+		const spent = Number(cycleRes.rows[0]?.total_spent) || 0
+		const percent =
+			budget > 0 ? Math.max(0, ((budget - spent) / budget) * 100) : 0
 
 		return NextResponse.json({
-			pieData: pieRes.rows,
-			lineData: lineRes.rows,
+			categories: pieRes.rows,
+			daily: lineRes.rows,
 			cycle: {
-				spent: Number(cycleRes.rows[0]?.total_spent) || 0,
+				spent: spent,
 				budget: budget,
 				start: cycleStart,
+				daysLeft: daysLeft,
+				percent: percent, // Budget remaining percentage
+				salary_day: salaryDay,
 			},
 		})
 	} catch (error) {

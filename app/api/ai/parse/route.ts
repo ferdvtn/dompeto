@@ -20,11 +20,11 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ error: "Gagal memproses AI" }, { status: 422 })
 		}
 
-		// Track Usage
+		// Track Usage (Consolidated into daily_stats)
 		const today = new Date().toISOString().split("T")[0]
 		try {
 			await db.execute({
-				sql: "INSERT INTO chat_usage (date, count) VALUES (?, 1) ON CONFLICT(date) DO UPDATE SET count = count + 1",
+				sql: "INSERT INTO daily_stats (date, chat_used) VALUES (?, 1) ON CONFLICT(date) DO UPDATE SET chat_used = chat_used + 1",
 				args: [today],
 			})
 		} catch (e) {

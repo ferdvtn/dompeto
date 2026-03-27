@@ -15,20 +15,3 @@ export async function GET() {
 		)
 	}
 }
-
-export async function POST(req: Request) {
-	try {
-		const { name, icon, color, type } = await req.json()
-		const result = await db.execute({
-			sql: "INSERT INTO categories (name, icon, color, type) VALUES (?, ?, ?, ?) RETURNING *",
-			args: [name, icon || "📂", color || "#ffffff", type || "expense"],
-		})
-		return NextResponse.json(result.rows[0], { status: 201 })
-	} catch (error) {
-		console.error("POST Category Error:", error)
-		return NextResponse.json(
-			{ error: "Gagal menambah kategori" },
-			{ status: 500 },
-		)
-	}
-}

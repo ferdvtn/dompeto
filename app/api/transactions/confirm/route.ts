@@ -9,12 +9,26 @@ export async function POST(req: NextRequest) {
 		const data = await req.json()
 		const { rawInput, amount, type, category, description, notes } = data
 
-		// 1. Cari category_id
+		// 1. Cari category_id (Case-insensitive & Trimmed)
 		const catResult = await db.execute({
-			sql: "SELECT id FROM categories WHERE name = ? LIMIT 1",
-			args: [category],
+			sql: "SELECT id, name FROM categories WHERE name = ? COLLATE NOCASE OR TRIM(name) = TRIM(?) COLLATE NOCASE LIMIT 1",
+			args: [category, category],
 		})
-		const categoryId = catResult.rows[0]?.id || 10 // Default 'Lainnya'
+
+		let categoryId = catResult.rows[0]?.id
+
+		if (!categoryId) {
+			const partialResult = await db.execute({
+				sql: "SELECT id, name FROM categories WHERE name LIKE ? LIMIT 1",
+				args: [`%${category}%`],
+			})
+			categoryId = partialResult.rows[0]?.id
+		}
+
+		// Final Fallback
+		if (!categoryId) {
+			categoryId = 10 // Default 'Lainnya'
+		}
 
 		// 2. Simpan Transaksi
 		const result = await db.execute({

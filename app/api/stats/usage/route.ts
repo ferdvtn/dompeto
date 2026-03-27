@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
 		const count = result.rows.length > 0 ? Number(result.rows[0].chat_used) : 0
 
-		return NextResponse.json({ count })
+		return NextResponse.json({ used: count })
 	} catch (error) {
 		console.error("GET Usage Error:", error)
 		return NextResponse.json(

@@ -1,218 +1,130 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import {
-	Save,
-	Calendar,
-	Wallet,
-	Shield,
-	Ban,
-	MessageSquare,
-} from "lucide-react"
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-	CardDescription,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { useState, useEffect } from "react"
+import { LogOut, Trash2, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 export default function SettingsPage() {
-	const [settings, setSettings] = useState<{ [key: string]: string }>({})
-	const [aiCount, setAiCount] = useState(0)
+	const router = useRouter()
+	const [salaryDay, setSalaryDay] = useState("25")
 	const [loading, setLoading] = useState(true)
-	const [saving, setSaving] = useState<string | null>(null)
 
 	useEffect(() => {
-		// Load existing settings & AI usage count
-		Promise.all([
-			fetch("/api/stats/charts").then((res) => res.json()),
-			fetch("/api/stats/usage").then((res) => res.json()),
-		]).then(([data, usage]) => {
-			setSettings({
-				salary_day: "25",
-				monthly_budget: String(data.cycle.budget),
-			})
-			if (usage.count !== undefined) setAiCount(usage.count)
-			setLoading(false)
-		})
+		const fetchData = async () => {
+			try {
+				const res = await fetch("/api/settings")
+				const settings = await res.json()
+				setSalaryDay(settings.salary_day || "25")
+			} catch (err) {
+				console.error("Failed to fetch settings")
+			} finally {
+				setLoading(false)
+			}
+		}
+		fetchData()
 	}, [])
 
-	const updateSetting = async (key: string, value: string) => {
-		setSaving(key)
+	const updateSettings = async () => {
 		try {
 			const res = await fetch("/api/settings", {
-				method: "PATCH",
-				body: JSON.stringify({ key, value }),
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ salary_day: salaryDay }),
 			})
-			if (!res.ok) throw new Error("Gagal menyimpan")
-			setSettings((prev) => ({ ...prev, [key]: value }))
-			toast.success("Pengaturan diperbarui")
-		} catch (err: any) {
-			toast.error(err.message)
-		} finally {
-			setSaving(null)
+			if (res.ok) {
+				toast.success("Pengaturan disimpan")
+			}
+		} catch (err) {
+			toast.error("Gagal menyimpan pengaturan")
 		}
 	}
 
-	const handleResetDatabase = async () => {
+	const handleResetData = async () => {
 		if (
 			!confirm(
-				"Apakah Anda yakin ingin menghapus SELURUH data? Tindakan ini tidak dapat dibatalkan.",
+				"Hapus seluruh data transaksi? Tindakan ini tidak dapat dibatalkan.",
 			)
 		)
 			return
 
-		setLoading(true)
 		try {
 			const res = await fetch("/api/settings/reset", { method: "POST" })
-			if (!res.ok) throw new Error("Gagal meriset database")
-			toast.success("Database berhasil direset")
-			window.location.reload()
-		} catch (err: any) {
-			toast.error(err.message)
-			setLoading(false)
+			if (res.ok) {
+				toast.success("Data berhasil direset")
+				router.push("/")
+			}
+		} catch (err) {
+			toast.error("Gagal mereset data")
 		}
 	}
 
-	if (loading) {
-		return (
-			<div className="p-4 space-y-6">
-				<Skeleton className="h-64 w-full rounded-3xl" />
-				<Skeleton className="h-48 w-full rounded-3xl" />
-			</div>
-		)
+	const handleLogout = async () => {
+		await fetch("/api/auth/logout", { method: "POST" })
+		router.push("/login")
 	}
 
 	return (
-		<div className="p-4 pb-24 space-y-6 animate-in fade-in duration-500">
-			<h1 className="text-2xl font-black italic">Setelan</h1>
+		<div className="p-4 pb-24 space-y-6">
+			<h1 className="text-2xl font-black italic text-slate-100">Pengaturan</h1>
 
-			{/* Budget Settings */}
-			<Card className="bg-gray-900 border-gray-800 shadow-xl overflow-hidden">
+			{/* App Settings */}
+			<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-[2rem] backdrop-blur-md overflow-hidden">
 				<CardHeader>
-					<div className="flex items-center gap-2 text-emerald-400 mb-1">
-						<Wallet className="w-5 h-5" />
-						<CardTitle className="text-lg font-black italic">
-							Target Anggaran
+					<div className="flex items-center gap-2 text-emerald-400">
+						<Calendar className="w-5 h-5" />
+						<CardTitle className="text-base font-black italic text-slate-100">
+							Keuangan
 						</CardTitle>
 					</div>
-					<CardDescription className="text-[10px] font-bold uppercase tracking-tight text-gray-500">
-						Tentukan batas pengiriman bulanan Anda
-					</CardDescription>
 				</CardHeader>
-				<CardContent className="space-y-4">
+				<CardContent className="space-y-6">
 					<div className="space-y-2">
-						<Label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-							Budget Bulanan (IDR)
-						</Label>
-						<div className="flex gap-2">
-							<Input
-								type="number"
-								className="bg-gray-800 border-gray-700 h-12 rounded-xl text-lg font-black italic"
-								value={settings.monthly_budget || ""}
-								onChange={(e) =>
-									setSettings({ ...settings, monthly_budget: e.target.value })
-								}
-							/>
-							<Button
-								className="h-12 w-12 rounded-xl bg-emerald-500"
-								onClick={() => updateSetting("monthly_budget", settings.monthly_budget)}
-								disabled={saving === "monthly_budget"}
-							>
-								<Save className="w-5 h-5" />
-							</Button>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
-
-			{/* Cycle Settings */}
-			<Card className="bg-gray-900 border-gray-800 shadow-xl overflow-hidden">
-				<CardHeader>
-					<div className="flex items-center gap-2 text-cyan-400 mb-1">
-						<Calendar className="w-5 h-5" />
-						<CardTitle className="text-lg font-black italic">Siklus Gaji</CardTitle>
-					</div>
-					<CardDescription className="text-[10px] font-bold uppercase tracking-tight text-gray-500">
-						Tanggal reset budget bulanan
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="space-y-2">
-						<Label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-							Tanggal Gajian (1-28)
-						</Label>
+						<label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+							Tanggal Gajian Harian
+						</label>
 						<div className="flex gap-2">
 							<Input
 								type="number"
 								min="1"
-								max="28"
-								className="bg-gray-800 border-gray-700 h-12 rounded-xl text-lg font-black italic"
-								value={settings.salary_day || "25"}
-								onChange={(e) =>
-									setSettings({ ...settings, salary_day: e.target.value })
-								}
+								max="31"
+								className="flex-1 bg-slate-950/40 border-white/5 h-12 rounded-2xl text-base font-black italic text-slate-100 shadow-inner"
+								value={salaryDay}
+								onChange={(e) => setSalaryDay(e.target.value)}
 							/>
 							<Button
-								className="h-12 w-12 rounded-xl bg-cyan-500"
-								onClick={() => updateSetting("salary_day", settings.salary_day)}
-								disabled={saving === "salary_day"}
+								onClick={updateSettings}
+								className="h-12 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
 							>
-								<Save className="w-5 h-5" />
+								SIMPAN
 							</Button>
 						</div>
 					</div>
 
-					{/* AI Usage Display (Simple Text Only) */}
-					<div className="pt-6 border-t border-gray-800 flex items-center justify-between">
-						<div className="flex items-center gap-3">
-							<div className="w-10 h-10 rounded-xl bg-gray-950 border border-gray-800 flex items-center justify-center text-cyan-400 shadow-inner">
-								<MessageSquare className="w-5 h-5" />
-							</div>
-							<div>
-								<div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-									Aktivitas AI (Hari Ini)
-								</div>
-								<div className="text-sm font-black italic text-gray-100">
-									{aiCount} Chat Terkirim
-								</div>
-							</div>
-						</div>
+					<div className="pt-4 space-y-3">
+						<Button
+							variant="outline"
+							className="w-full h-12 rounded-2xl border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-black italic text-xs gap-3"
+							onClick={handleResetData}
+						>
+							<Trash2 className="w-4 h-4" />
+							RESET SELURUH DATA
+						</Button>
+
+						<Button
+							variant="ghost"
+							className="w-full h-12 rounded-2xl text-slate-500 hover:text-slate-300 hover:bg-white/5 font-black italic text-xs gap-3"
+							onClick={handleLogout}
+						>
+							<LogOut className="w-4 h-4" />
+							KELUAR DARI AKUN
+						</Button>
 					</div>
 				</CardContent>
 			</Card>
-
-			{/* Account Mode */}
-			<Card className="bg-gray-950 border-gray-800 border-dashed">
-				<CardContent className="p-4 flex items-center gap-4">
-					<div className="w-12 h-12 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center">
-						<Shield className="w-6 h-6 text-gray-500" />
-					</div>
-					<div>
-						<div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-							Mode Akun
-						</div>
-						<div className="text-sm font-bold italic text-gray-400">
-							Single User Instance (Admin)
-						</div>
-					</div>
-				</CardContent>
-			</Card>
-
-			<Button
-				variant="ghost"
-				className="w-full h-12 rounded-xl text-red-500/50 border border-red-500/10 hover:bg-red-500/5 gap-2 uppercase text-[10px] font-black tracking-widest"
-				onClick={handleResetDatabase}
-				disabled={loading}
-			>
-				<Ban className="w-4 h-4" /> Reset Database
-			</Button>
 		</div>
 	)
 }

@@ -2,20 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-	Home,
-	PieChart,
-	LayoutGrid,
-	Settings,
-	MessageSquare,
-} from "lucide-react"
+import { Home, PieChart, Settings, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
 	{ label: "Home", href: "/", icon: Home },
 	{ label: "Grafik", href: "/charts", icon: PieChart },
 	{ label: "AI Chat", href: "/chat", icon: MessageSquare },
-	{ label: "Kategori", href: "/categories", icon: LayoutGrid },
 	{ label: "Setelan", href: "/settings", icon: Settings },
 ]
 

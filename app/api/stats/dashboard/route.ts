@@ -36,11 +36,22 @@ export async function GET() {
       ORDER BY t.created_at DESC LIMIT 5
     `)
 
+		// 4. Cycle Info (for Settings & UI)
+		const settingsRes = await db.execute("SELECT key, value FROM settings")
+		const settings: { [key: string]: string } = {}
+		settingsRes.rows.forEach((row: any) => {
+			settings[row.key] = row.value
+		})
+
 		return NextResponse.json({
 			balance,
 			spentToday: spent_today || 0,
 			countToday: count_today || 0,
 			latestTransactions: latestRes.rows,
+			cycle: {
+				salary_day: settings.salary_day || "25",
+				budget: settings.monthly_budget || "0",
+			},
 		})
 	} catch (error) {
 		console.error("Dashboard Stats Error:", error)

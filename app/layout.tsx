@@ -4,7 +4,6 @@ import "./globals.css"
 import { cn } from "@/lib/utils"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
-
 const inter = Inter({ subsets: ["latin"] })
 
 export const viewport = {
@@ -24,11 +23,11 @@ export default function RootLayout({
 	children: React.ReactNode
 }>) {
 	return (
-		<html lang="id" className={cn("font-sans dark", geist.variable)}>
+		<html lang="id" className={cn("font-sans", geist.variable)}>
 			<body
-				className={`${inter.className} bg-black text-gray-100 min-h-screen antialiased flex justify-center`}
+				className={`${inter.className} bg-[#02030a] text-slate-100 min-h-screen antialiased flex justify-center`}
 			>
-				<div className="w-full max-w-md bg-gray-950 min-h-screen shadow-2xl shadow-emerald-950/20 relative">
+				<div className="w-full max-w-md bg-[#020617] min-h-screen shadow-2xl relative border-x border-white/5">
 					{children}
 				</div>
 			</body>

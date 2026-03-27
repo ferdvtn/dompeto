@@ -2,33 +2,29 @@
 
 import { useEffect, useState } from "react"
 import {
-	PieChart as RePie,
+	PieChart,
 	Pie,
 	Cell,
 	ResponsiveContainer,
-	LineChart as ReLine,
-	Line,
+	Tooltip,
 	XAxis,
 	YAxis,
-	Tooltip,
 	CartesianGrid,
-	BarChart as ReBar,
+	BarChart,
 	Bar,
+	LabelList,
 } from "recharts"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+} from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TrendingUp, PieChart as PieIcon, Calendar, Target } from "lucide-react"
+import { TrendingUp, Wallet, Calendar } from "lucide-react"
 
-const COLORS = [
-	"#10b981",
-	"#3b82f6",
-	"#f59e0b",
-	"#ef4444",
-	"#8b5cf6",
-	"#ec4899",
-	"#06b6d4",
-]
+const COLORS = ["#10b981", "#06b6d4", "#f59e0b", "#ef4444", "#8b5cf6"]
 
 export default function ChartsPage() {
 	const [data, setData] = useState<any>(null)
@@ -43,110 +39,123 @@ export default function ChartsPage() {
 			})
 	}, [])
 
-	const formatIDR = (amount: number) => {
-		return new Intl.NumberFormat("id-ID", {
-			style: "currency",
-			currency: "IDR",
-			minimumFractionDigits: 0,
-		}).format(amount)
+	const formatIDR = (val: number) => {
+		return "Rp " + new Intl.NumberFormat("id-ID").format(val)
 	}
 
 	if (loading) {
 		return (
 			<div className="p-4 space-y-6">
-				<Skeleton className="h-64 w-full rounded-3xl" />
-				<Skeleton className="h-48 w-full rounded-3xl" />
-				<Skeleton className="h-48 w-full rounded-3xl" />
+				<Skeleton className="h-64 w-full rounded-[2rem] bg-slate-900/50" />
+				<Skeleton className="h-64 w-full rounded-[2rem] bg-slate-900/50" />
+				<Skeleton className="h-64 w-full rounded-[2rem] bg-slate-900/50" />
 			</div>
 		)
 	}
 
-	const cyclePercentage = Math.min(
-		Math.round((data.cycle.spent / data.cycle.budget) * 100),
-		100,
-	)
-
 	return (
-		<div className="p-4 pb-24 space-y-6 animate-in fade-in duration-500">
-			<h1 className="text-2xl font-black italic">Analitik & Grafik</h1>
+		<div className="p-4 pb-24 space-y-6">
+			<h1 className="text-2xl font-black italic text-slate-100">Analitik</h1>
 
-			{/* Salary Cycle Tracker */}
-			<Card className="bg-gray-900 border-gray-800 shadow-xl overflow-hidden relative border-l-4 border-l-emerald-500">
+			{/* Salary Cycle Info */}
+			<Card className="bg-emerald-600/20 border-emerald-500/20 text-emerald-100 shadow-2xl shadow-emerald-950/20 rounded-[2rem] overflow-hidden backdrop-blur-md">
 				<CardHeader className="pb-2">
-					<CardTitle className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-						<Calendar className="w-3 h-3 text-emerald-400" /> Siklus Gaji (Sejak tgl
-						25)
-					</CardTitle>
+					<div className="flex items-center justify-between">
+						<CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">
+							Siklus Gaji ini
+						</CardTitle>
+						<Calendar className="w-4 h-4 opacity-50 text-emerald-400" />
+					</div>
 				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="flex justify-between items-end">
-						<div>
-							<div className="text-2xl font-black italic text-gray-100">
-								{formatIDR(data.cycle.spent)}
-							</div>
-							<div className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">
-								Terpakai dari {formatIDR(data.cycle.budget)}
-							</div>
+				<CardContent>
+					<div className="text-xl font-black italic mb-4 text-emerald-300">
+						{data.cycle.daysLeft} Hari Lagi
+					</div>
+					<div className="space-y-2">
+						<div className="flex justify-between text-[10px] font-bold uppercase">
+							<span>Sisa Anggaran</span>
+							<span>{Math.max(0, Math.round(data.cycle.percent))}%</span>
 						</div>
-						<div className="text-right">
-							<div className="text-lg font-black text-emerald-400 italic">
-								{cyclePercentage}%
-							</div>
+						<div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
+							<div
+								className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000"
+								style={{ width: `${Math.min(100, data.cycle.percent)}%` }}
+							/>
+						</div>
+						<div className="flex justify-between text-[10px] font-black italic pt-1">
+							<span>{formatIDR(data.cycle.spent)}</span>
+							<span className="opacity-40">Limit: {formatIDR(data.cycle.budget)}</span>
 						</div>
 					</div>
-					<Progress value={cyclePercentage} className="h-3 bg-gray-800" />
-					<p className="text-[10px] text-gray-500 italic">
-						Sisa anggaran:{" "}
-						<span className="text-emerald-400 font-bold">
-							{formatIDR(data.cycle.budget - data.cycle.spent)}
-						</span>
-					</p>
 				</CardContent>
 			</Card>
 
-			{/* Pie Chart: Category Breakdown */}
-			<Card className="bg-gray-900 border-gray-800 shadow-xl">
-				<CardHeader className="pb-0">
-					<CardTitle className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-						<PieIcon className="w-3 h-3 text-cyan-400" /> Breakdown Kategori
-					</CardTitle>
+			{/* Category Pie Chart */}
+			<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-[2rem] backdrop-blur-md">
+				<CardHeader>
+					<div className="flex items-center gap-2 text-emerald-400">
+						<TrendingUp className="w-5 h-5" />
+						<CardTitle className="text-lg font-black italic text-slate-100">
+							Alokasi Dana
+						</CardTitle>
+					</div>
+					<CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+						Distribusi pengeluaran bulan ini
+					</CardDescription>
 				</CardHeader>
-				<CardContent className="pt-4 h-[320px]">
-					<ResponsiveContainer width="100%" height={240}>
-						<RePie>
-							<Pie
-								data={data.pieData}
-								innerRadius={50}
-								outerRadius={80}
-								paddingAngle={5}
-								dataKey="value"
-								nameKey="name"
-							>
-								{data.pieData.map((entry: any, index: number) => (
-									<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-								))}
-							</Pie>
-							<Tooltip
-								contentStyle={{
-									backgroundColor: "#111827",
-									border: "1px solid #1f2937",
-									borderRadius: "12px",
-									fontSize: "12px",
-								}}
-								itemStyle={{ color: "#fff" }}
-								formatter={(val: any) => formatIDR(Number(val) || 0)}
-							/>
-						</RePie>
-					</ResponsiveContainer>
-					<div className="flex flex-wrap gap-2 justify-center mt-2 px-2">
-						{data.pieData.map((entry: any, index: number) => (
-							<div key={entry.name} className="flex items-center gap-1.5">
-								<div
-									className="w-2 h-2 rounded-full"
-									style={{ backgroundColor: COLORS[index % COLORS.length] }}
+				<CardContent className="pt-0">
+					<div className="h-64 w-full">
+						<ResponsiveContainer width="100%" height="100%">
+							<PieChart>
+								<Pie
+									data={data.categories}
+									cx="50%"
+									cy="50%"
+									innerRadius={60}
+									outerRadius={80}
+									paddingAngle={5}
+									dataKey="value"
+									labelLine={false}
+								>
+									{data.categories.map((_: any, index: number) => (
+										<Cell
+											key={`cell-${index}`}
+											fill={COLORS[index % COLORS.length]}
+											stroke="transparent"
+										/>
+									))}
+									<LabelList
+										dataKey="name"
+										position="outside"
+										style={{ fontSize: "9px", fontWeight: "bold", fill: "#64748b" }}
+										formatter={(val: any) => String(val || "").split(" ")[0]}
+									/>
+								</Pie>
+								<Tooltip
+									contentStyle={{
+										backgroundColor: "#0f172a",
+										borderRadius: "16px",
+										border: "1px solid rgba(255,255,255,0.05)",
+										boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+										fontSize: "12px",
+										fontWeight: "bold",
+										fontStyle: "italic",
+									}}
+									itemStyle={{ color: "#f1f5f9" }}
+									formatter={(val: any) => [formatIDR(Number(val || 0)), "Nilai"]}
 								/>
-								<span className="text-[9px] font-bold text-gray-400 uppercase">
-									{entry.name}
+							</PieChart>
+						</ResponsiveContainer>
+					</div>
+					<div className="grid grid-cols-2 gap-2 mt-4 px-2">
+						{data.categories.slice(0, 4).map((cat: any, i: number) => (
+							<div key={cat.name} className="flex items-center gap-2">
+								<div
+									className="w-2 rounded-full h-2"
+									style={{ backgroundColor: COLORS[i % COLORS.length] }}
+								/>
+								<span className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-tighter">
+									{cat.name}
 								</span>
 							</div>
 						))}
@@ -154,78 +163,83 @@ export default function ChartsPage() {
 				</CardContent>
 			</Card>
 
-			{/* Line Chart: Daily Trend */}
-			<Card className="bg-gray-900 border-gray-800 shadow-xl">
-				<CardHeader className="pb-0">
-					<CardTitle className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-						<TrendingUp className="w-3 h-3 text-emerald-400" /> Tren Pengeluaran (14
-						Hari)
-					</CardTitle>
+			{/* Daily Spending Line Chart */}
+			<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-[2rem] backdrop-blur-md">
+				<CardHeader>
+					<div className="text-cyan-400 flex items-center gap-2 mb-1">
+						<TrendingUp className="w-5 h-5" />
+						<CardTitle className="text-lg font-black italic text-slate-100">
+							Tren Harian
+						</CardTitle>
+					</div>
+					<CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+						Pengeluaran 7 hari terakhir
+					</CardDescription>
 				</CardHeader>
-				<CardContent className="pt-6 h-[220px]">
-					<ResponsiveContainer width="100%" height={180}>
-						<ReLine data={data.lineData}>
-							<CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-							<XAxis
-								dataKey="date"
-								axisLine={false}
-								tickLine={false}
-								tick={{ fill: "#4b5563", fontSize: 10 }}
-								tickFormatter={(v) => v.split("-").slice(1).reverse().join("/")}
-							/>
-							<YAxis hide />
-							<Tooltip
-								contentStyle={{
-									backgroundColor: "#111827",
-									border: "1px solid #1f2937",
-									borderRadius: "12px",
-									fontSize: "12px",
-								}}
-								itemStyle={{ color: "#fff" }}
-								formatter={(val: any) => formatIDR(Number(val) || 0)}
-							/>
-							<Line
-								type="monotone"
-								dataKey="amount"
-								stroke="#10b981"
-								strokeWidth={3}
-								dot={{ r: 4, fill: "#10b981", strokeWidth: 2, stroke: "#111827" }}
-								activeDot={{ r: 6 }}
-							/>
-						</ReLine>
-					</ResponsiveContainer>
-				</CardContent>
-			</Card>
-
-			{/* Bar Chart: Spending Comparison */}
-			<Card className="bg-gray-900 border-gray-800 shadow-xl">
-				<CardHeader className="pb-0">
-					<CardTitle className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-						<Target className="w-3 h-3 text-amber-400" /> Perbandingan Per Kategori
-					</CardTitle>
-				</CardHeader>
-				<CardContent className="pt-6 h-[220px]">
-					<ResponsiveContainer width="100%" height={180}>
-						<ReBar data={data.pieData}>
-							<XAxis
-								dataKey="name"
-								axisLine={false}
-								tickLine={false}
-								tick={{ fill: "#4b5563", fontSize: 9 }}
-							/>
-							<YAxis hide />
-							<Tooltip
-								contentStyle={{
-									backgroundColor: "#111827",
-									border: "1px solid #1f2937",
-									borderRadius: "12px",
-									fontSize: "12px",
-								}}
-								formatter={(val: any) => formatIDR(Number(val) || 0)}
-							/>
-							<Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-						</ReBar>
-					</ResponsiveContainer>
+				<CardContent>
+					<div className="h-64 w-full">
+						<ResponsiveContainer width="100%" height="100%">
+							<BarChart
+								data={data.daily}
+								margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+							>
+								<XAxis
+									dataKey="date"
+									axisLine={false}
+									tickLine={false}
+									tick={{ fill: "#64748b", fontSize: 9, fontWeight: "bold" }}
+									className="uppercase tracking-widest"
+									tickFormatter={(val: any) =>
+										String(val || "")
+											.split("-")
+											.slice(1, 3)
+											.join("/")
+									}
+								/>
+								<YAxis hide />
+								<Tooltip
+									cursor={{ fill: "rgba(255,255,255,0.03)" }}
+									contentStyle={{
+										backgroundColor: "#0f172a",
+										borderRadius: "16px",
+										border: "1px solid rgba(255,255,255,0.05)",
+										boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+										fontSize: "12px",
+										fontWeight: "bold",
+										fontStyle: "italic",
+									}}
+									itemStyle={{ color: "#22d3ee" }}
+									formatter={(val: any) => [formatIDR(Number(val || 0)), "Keluar"]}
+								/>
+								<Bar
+									dataKey="amount"
+									fill="url(#barGradient)"
+									radius={[8, 8, 0, 0]}
+									barSize={28}
+								>
+									<LabelList
+										dataKey="amount"
+										position="top"
+										style={{
+											fontSize: "8px",
+											fontWeight: "900",
+											fill: "#06b6d4",
+											fontStyle: "italic",
+										}}
+										formatter={(val: any) =>
+											Number(val || 0) > 0 ? `${Math.round(Number(val) / 1000)}k` : ""
+										}
+									/>
+								</Bar>
+								<defs>
+									<linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+										<stop offset="0%" stopColor="#06b6d4" />
+										<stop offset="100%" stopColor="#06b6d4" stopOpacity={0.1} />
+									</linearGradient>
+								</defs>
+							</BarChart>
+						</ResponsiveContainer>
+					</div>
 				</CardContent>
 			</Card>
 		</div>
