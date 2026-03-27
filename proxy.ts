@@ -1,33 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
-import { jwtVerify } from "jose"
-
-const PUBLIC_PATHS = ["/login", "/api/auth/login"]
+import { verifyJwt } from "./lib/jwt"
 
 export async function proxy(req: NextRequest) {
 	const { pathname } = req.nextUrl
 
-	// Izinkan akses ke jalur publik
-	if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-		return NextResponse.next()
-	}
-
-	// Ambil token dari cookie
+	// 1. Cek token dari cookie
 	const token = req.cookies.get("finance_session")?.value
+	const isValid = token ? await verifyJwt(token) : false
 
-	if (!token) {
-		return NextResponse.redirect(new URL("/login", req.url))
+	// 2. Jika di halaman login tapi sudah login, redirect ke home
+	if (pathname === "/login" && isValid) {
+		return NextResponse.redirect(new URL("/", req.url))
 	}
 
-	try {
-		const secret = new TextEncoder().encode(
-			process.env.APP_JWT_SECRET || "default_secret_min_32_chars_placeholder",
-		)
-		await jwtVerify(token, secret)
+	// 3. Izinkan akses ke jalur publik lainnya (misal: API login)
+	if (pathname.startsWith("/api/auth/login")) {
 		return NextResponse.next()
-	} catch (error) {
-		// Token tidak valid atau kadaluwarsa
+	}
+
+	// 4. Proteksi rute terproteksi: Jika belum login, redirect ke login
+	if (!isValid && pathname !== "/login") {
 		return NextResponse.redirect(new URL("/login", req.url))
 	}
+
+	return NextResponse.next()
 }
 
 export const config = {
