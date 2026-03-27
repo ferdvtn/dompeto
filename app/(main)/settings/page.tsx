@@ -105,7 +105,7 @@ export default function SettingsPage() {
 	}
 
 	return (
-		<div className="p-4 pb-24 space-y-5">
+		<div className="p-4 pb-5 space-y-5">
 			<h1 className="text-xl font-black italic text-slate-100">Pengaturan</h1>
 			{/* AI Activity */}
 			<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-2xl backdrop-blur-md overflow-hidden">

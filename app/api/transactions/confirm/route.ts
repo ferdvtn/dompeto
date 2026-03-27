@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
 		// 2. Simpan Transaksi
 		const result = await db.execute({
 			sql: `
-        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, ai_confirmed, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now', '+7 hours'))
+        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, date, ai_confirmed, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+7 hours'), 1, datetime('now', '+7 hours'), datetime('now', '+7 hours'))
         RETURNING *
       `,
 			args: [rawInput, amount, type, categoryId, description, notes],

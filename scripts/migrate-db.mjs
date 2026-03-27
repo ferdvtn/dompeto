@@ -33,7 +33,7 @@ CREATE TABLE categories (
   type TEXT NOT NULL CHECK(type IN ('expense', 'income')),
   is_default INTEGER DEFAULT 0,
   monthly_budget INTEGER DEFAULT 0,
-  created_at DATETIME DEFAULT (datetime('now', 'localtime'))
+  created_at DATETIME DEFAULT (datetime('now', '+7 hours'))
 );
 
 -- Transactions Table
@@ -47,8 +47,9 @@ CREATE TABLE transactions (
   description TEXT,
   notes TEXT,
   ai_confirmed INTEGER DEFAULT 0,
-  created_at DATETIME DEFAULT (datetime('now', 'localtime')),
-  updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+  date DATETIME,
+  created_at DATETIME DEFAULT (datetime('now', '+7 hours')),
+  updated_at DATETIME DEFAULT (datetime('now', '+7 hours'))
 );
 
 -- Settings Table

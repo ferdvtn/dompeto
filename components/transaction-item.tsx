@@ -35,7 +35,7 @@ export function TransactionItem({ tx, onClick }: TransactionItemProps) {
 					</div>
 					<div className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">
 						{tx.category_name} •{" "}
-						{new Date(tx.created_at).toLocaleDateString("id", {
+						{new Date(tx.date).toLocaleDateString("id", {
 							day: "2-digit",
 							month: "short",
 						})}

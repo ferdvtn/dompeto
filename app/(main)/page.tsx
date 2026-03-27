@@ -71,7 +71,7 @@ export default function Dashboard() {
 	}
 
 	return (
-		<div className="p-4 pb-24 space-y-6">
+		<div className="p-4 pb-10 space-y-6">
 			{/* Header */}
 			<div className="flex justify-between items-center">
 				<div>
@@ -181,7 +181,7 @@ export default function Dashboard() {
 			</div>
 
 			{/* Floating Bottom Button */}
-			<div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-[220px] px-4">
+			<div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[220px] px-4">
 				<AddTransactionModal onSuccess={fetchStats}>
 					<Button className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 gap-3 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all">
 						<Plus className="w-4 h-4" /> CATAT
@@ -193,6 +193,7 @@ export default function Dashboard() {
 				transaction={selectedTx}
 				onClose={() => setSelectedTx(null)}
 				onDelete={handleDelete}
+				onUpdate={fetchStats}
 			/>
 		</div>
 	)

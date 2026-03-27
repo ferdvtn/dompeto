@@ -45,7 +45,7 @@ export default function ChartsPage() {
 	}
 
 	return (
-		<div className="p-4 pb-24 space-y-6">
+		<div className="p-4 pb-5 space-y-6">
 			<h1 className="text-2xl font-black italic text-slate-100">Analitik</h1>
 
 			{/* Salary Cycle Info */}

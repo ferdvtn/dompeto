@@ -23,7 +23,7 @@ export async function GET() {
           SUM(amount) as spent_today,
           COUNT(*) as count_today
         FROM transactions 
-        WHERE type = 'expense' AND date(created_at) = ?
+        WHERE type = 'expense' AND date(date) = ?
       `,
 			args: [today],
 		})
@@ -34,7 +34,7 @@ export async function GET() {
       SELECT t.*, c.name as category_name, c.icon as category_icon
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
-      ORDER BY t.created_at DESC LIMIT 5
+      ORDER BY t.date DESC, t.created_at DESC LIMIT 5
     `)
 
 		// 4. Cycle Info (for Settings & UI)

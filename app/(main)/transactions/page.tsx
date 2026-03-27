@@ -51,7 +51,7 @@ export default function TransactionsPage() {
 	)
 
 	return (
-		<div className="p-4 pb-24 space-y-6">
+		<div className="p-4 pb-5 space-y-6">
 			<div className="flex items-center gap-4">
 				<Button
 					size="icon"
@@ -99,6 +99,7 @@ export default function TransactionsPage() {
 				transaction={selectedTx}
 				onClose={() => setSelectedTx(null)}
 				onDelete={handleDelete}
+				onUpdate={fetchTransactions}
 			/>
 		</div>
 	)

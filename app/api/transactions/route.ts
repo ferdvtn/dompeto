@@ -9,7 +9,7 @@ export async function GET() {
         SELECT t.*, c.name as category_name, c.icon as category_icon 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        ORDER BY t.created_at DESC LIMIT 50
+        ORDER BY t.date DESC, t.created_at DESC LIMIT 50
       `,
 			args: [],
 		})
@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
 		// 3. Simpan ke database
 		const result = await db.execute({
 			sql: `
-        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+7 hours'))
+        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, date, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+7 hours'), datetime('now', '+7 hours'), datetime('now', '+7 hours'))
         RETURNING *
       `,
 			args: [

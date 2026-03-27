@@ -27,15 +27,15 @@ export async function PATCH(
 ) {
 	try {
 		const { id } = await params
-		const { description, amount, type, category_id } = await req.json()
+		const { description, amount, type, category_id, date } = await req.json()
 
 		await db.execute({
 			sql: `
         UPDATE transactions 
-        SET description = ?, amount = ?, type = ?, category_id = ?, updated_at = datetime('now', 'localtime')
+        SET description = ?, amount = ?, type = ?, category_id = ?, date = ?, updated_at = datetime('now', '+7 hours')
         WHERE id = ?
       `,
-			args: [description, amount, type, category_id, id],
+			args: [description, amount, type, category_id, date, id],
 		})
 
 		return NextResponse.json({ success: true })
