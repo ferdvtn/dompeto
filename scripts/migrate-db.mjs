@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS settings;
 DROP TABLE IF EXISTS daily_stats;
+DROP TABLE IF EXISTS login_attempts;
 
 -- Categories Table
 CREATE TABLE categories (
@@ -65,6 +66,13 @@ CREATE TABLE daily_stats (
   total_spent INTEGER DEFAULT 0,
   chat_used INTEGER DEFAULT 0,
   parse_used INTEGER DEFAULT 0
+);
+
+-- Login Attempts Table (Security)
+CREATE TABLE login_attempts (
+  ip TEXT PRIMARY KEY,
+  count INTEGER DEFAULT 0,
+  last_attempt DATETIME DEFAULT (datetime('now', 'localtime'))
 );
 
 -- Initial Categories (Seeding)
