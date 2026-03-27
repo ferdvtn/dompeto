@@ -22,7 +22,8 @@ import {
 	CardDescription,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TrendingUp, Wallet, Calendar } from "lucide-react"
+import { TrendingUp, Wallet, Calendar, AlertTriangle } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const COLORS = ["#10b981", "#06b6d4", "#f59e0b", "#ef4444", "#8b5cf6"]
 
@@ -58,33 +59,73 @@ export default function ChartsPage() {
 			<h1 className="text-2xl font-black italic text-slate-100">Analitik</h1>
 
 			{/* Salary Cycle Info */}
-			<Card className="bg-emerald-600/20 border-emerald-500/20 text-emerald-100 shadow-2xl shadow-emerald-950/20 rounded-[2rem] overflow-hidden backdrop-blur-md">
+			<Card
+				className={cn(
+					"shadow-2xl rounded-[2rem] overflow-hidden backdrop-blur-md border",
+					data.cycle.spent > data.cycle.budget
+						? "bg-red-600/20 border-red-500/20 text-red-100 shadow-red-950/20"
+						: "bg-emerald-600/20 border-emerald-500/20 text-emerald-100 shadow-emerald-950/20",
+				)}
+			>
 				<CardHeader className="pb-2">
 					<div className="flex items-center justify-between">
 						<CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">
 							Siklus Gaji ini
 						</CardTitle>
-						<Calendar className="w-4 h-4 opacity-50 text-emerald-400" />
+						{data.cycle.spent > data.cycle.budget ? (
+							<AlertTriangle className="w-4 h-4 text-red-400" />
+						) : (
+							<Calendar className="w-4 h-4 opacity-50 text-emerald-400" />
+						)}
 					</div>
 				</CardHeader>
 				<CardContent>
-					<div className="text-xl font-black italic mb-4 text-emerald-300">
+					<div
+						className={cn(
+							"text-xl font-black italic mb-4",
+							data.cycle.spent > data.cycle.budget
+								? "text-red-300"
+								: "text-emerald-300",
+						)}
+					>
 						{data.cycle.daysLeft} Hari Lagi
 					</div>
-					<div className="space-y-2">
-						<div className="flex justify-between text-[10px] font-bold uppercase">
-							<span>Sisa Anggaran</span>
-							<span>{Math.max(0, Math.round(data.cycle.percent))}%</span>
+					<div className="space-y-4">
+						<div className="flex justify-between items-center text-[10px] font-bold uppercase">
+							<span
+								className={data.cycle.spent > data.cycle.budget ? "text-red-300" : ""}
+							>
+								{data.cycle.spent > data.cycle.budget
+									? "Anggaran Terlampaui"
+									: "Sisa Anggaran"}
+							</span>
+							{data.cycle.spent <= data.cycle.budget && (
+								<span>{Math.round(data.cycle.percent)}%</span>
+							)}
 						</div>
-						<div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
-							<div
-								className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000"
-								style={{ width: `${Math.min(100, data.cycle.percent)}%` }}
-							/>
-						</div>
-						<div className="flex justify-between text-[10px] font-black italic pt-1">
-							<span>{formatIDR(data.cycle.spent)}</span>
-							<span className="opacity-40">Limit: {formatIDR(data.cycle.budget)}</span>
+
+						{data.cycle.spent <= data.cycle.budget && (
+							<div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
+								<div
+									className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000"
+									style={{ width: `${data.cycle.percent}%` }}
+								/>
+							</div>
+						)}
+
+						<div className="flex justify-between text-[11px] font-black italic pt-1">
+							<div className="flex flex-col">
+								<span className="text-[8px] opacity-40 uppercase not-italic mb-0.5">
+									Terpakai
+								</span>
+								<span>{formatIDR(data.cycle.spent)}</span>
+							</div>
+							<div className="flex flex-col text-right">
+								<span className="text-[8px] opacity-40 uppercase not-italic mb-0.5">
+									Limit
+								</span>
+								<span>{formatIDR(data.cycle.budget)}</span>
+							</div>
 						</div>
 					</div>
 				</CardContent>

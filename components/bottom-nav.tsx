@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, PieChart, Settings, MessageSquare } from "lucide-react"
@@ -14,6 +15,13 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
 	const pathname = usePathname()
+	const [mounted, setMounted] = useState(false)
+
+	useEffect(() => {
+		setMounted(true)
+	}, [])
+
+	if (!mounted) return null
 
 	return (
 		<nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-gray-900/80 backdrop-blur-lg border-t border-gray-800 pb-safe-area-inset-bottom z-50">
@@ -32,7 +40,9 @@ export function BottomNav() {
 							)}
 						>
 							<Icon className="w-5 h-5" />
-							<span className="text-[10px] font-medium">{item.label}</span>
+							<span className="text-[9px] font-bold uppercase tracking-widest">
+								{item.label}
+							</span>
 						</Link>
 					)
 				})}

@@ -17,6 +17,8 @@ export const metadata: Metadata = {
 	description: "Pelacak keuangan pribadi bertenaga AI",
 }
 
+import { Toaster } from "@/components/ui/sonner"
+
 export default function RootLayout({
 	children,
 }: Readonly<{
@@ -29,6 +31,7 @@ export default function RootLayout({
 			>
 				<div className="w-full max-w-md bg-[#020617] min-h-screen shadow-2xl relative border-x border-white/5">
 					{children}
+					<Toaster richColors position="top-center" />
 				</div>
 			</body>
 		</html>

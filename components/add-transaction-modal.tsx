@@ -107,18 +107,18 @@ export function AddTransactionModal({
 			}}
 		>
 			<DrawerTrigger asChild>{children}</DrawerTrigger>
-			<DrawerContent className="rounded-t-[3.5rem] bg-[#020617] border-t border-white/5 p-8 sm:max-w-md mx-auto shadow-2xl overflow-hidden outline-none">
+			<DrawerContent className="rounded-t-[2rem] bg-[#020617] border-t border-white/5 p-6 sm:max-w-md mx-auto shadow-2xl overflow-hidden outline-none">
 				<DrawerHeader className="p-0 text-left">
-					<div className="mx-auto w-12 h-1.5 bg-slate-800 rounded-full mb-8" />
-					<DrawerTitle className="text-xl font-black italic flex items-center gap-3 text-slate-100">
+					<div className="mx-auto w-10 h-1 bg-slate-800 rounded-full mb-6" />
+					<DrawerTitle className="text-lg font-black italic flex items-center gap-3 text-slate-100">
 						<Sparkles
-							className={cn("w-6 h-6 text-emerald-500", loading && "animate-pulse")}
+							className={cn("w-5 h-5 text-emerald-500", loading && "animate-pulse")}
 						/>
 						AI Dompeto
 					</DrawerTitle>
 				</DrawerHeader>
 
-				<div className="space-y-8 py-6 font-sans">
+				<div className="space-y-6 py-4 font-sans">
 					{!confirmationData ? (
 						<div className="space-y-6">
 							<div className="space-y-4">
@@ -129,8 +129,8 @@ export function AddTransactionModal({
 									<div className="relative group">
 										<Input
 											ref={inputRef}
-											placeholder="Contoh: kopi 20k, gaji 10jt..."
-											className="bg-slate-900/40 border-white/5 h-14 rounded-2xl text-base font-bold italic shadow-inner focus-visible:ring-emerald-500 text-slate-100 placeholder:text-slate-700"
+											placeholder="Contoh: kopi 20k..."
+											className="bg-slate-900/40 border-white/5 h-11 rounded-xl text-sm font-bold italic shadow-inner focus-visible:ring-emerald-500 text-slate-100 placeholder:text-slate-700 px-4"
 											value={rawInput}
 											onChange={(e) => setRawInput(e.target.value)}
 											onKeyDown={(e) => e.key === "Enter" && handleParse()}
@@ -157,28 +157,28 @@ export function AddTransactionModal({
 							</div>
 
 							<Button
-								className="w-full h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-sm shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
+								className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
 								onClick={() => handleParse()}
 								disabled={loading || !rawInput.trim()}
 							>
 								{loading ? (
-									<Loader2 className="w-5 h-5 animate-spin mr-2" />
+									<Loader2 className="w-4 h-4 animate-spin mr-2" />
 								) : (
-									<Plus className="w-5 h-5 mr-2" />
+									<Plus className="w-4 h-4 mr-2" />
 								)}
 								PROSES AI
 							</Button>
 						</div>
 					) : (
-						<div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-							<div className="grid grid-cols-2 gap-4">
-								<div className="p-4 bg-slate-900/40 rounded-3xl border border-white/5 space-y-1 shadow-inner">
-									<div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-										<Receipt className="w-3 h-3" /> Nominal
+						<div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+							<div className="grid grid-cols-2 gap-3 pt-1">
+								<div className="p-3 bg-slate-900/40 rounded-2xl border border-white/5 space-y-1 shadow-inner">
+									<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+										<Receipt className="w-2.5 h-2.5" /> Nominal
 									</div>
 									<div
 										className={cn(
-											"text-base font-black italic",
+											"text-sm font-black italic",
 											confirmationData.type === "income"
 												? "text-emerald-400"
 												: "text-red-400",
@@ -188,42 +188,42 @@ export function AddTransactionModal({
 										{formatIDR(confirmationData.amount)}
 									</div>
 								</div>
-								<div className="p-4 bg-slate-900/40 rounded-3xl border border-white/5 space-y-1 shadow-inner">
-									<div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-										<Calendar className="w-3 h-3" /> Kategori
+								<div className="p-3 bg-slate-900/40 rounded-2xl border border-white/5 space-y-1 shadow-inner">
+									<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+										<Calendar className="w-2.5 h-2.5" /> Kategori
 									</div>
-									<div className="font-black italic text-slate-100 tracking-tighter">
+									<div className="text-sm font-black italic text-slate-100 tracking-tighter">
 										{confirmationData.category}
 									</div>
 								</div>
 							</div>
 
-							<div className="space-y-2 border-t border-white/5 pt-5">
-								<div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
-									<Info className="w-3 h-3" /> Keterangan
+							<div className="space-y-1.5 border-t border-white/5 pt-4">
+								<div className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+									<Info className="w-2.5 h-2.5" /> Keterangan
 								</div>
-								<div className="text-xs text-slate-300 font-bold italic bg-slate-900/40 p-3 rounded-2xl border border-white/5 shadow-inner leading-relaxed">
+								<div className="text-[11px] text-slate-300 font-bold italic bg-slate-900/40 p-2.5 rounded-xl border border-white/5 shadow-inner leading-relaxed">
 									"{confirmationData.description || rawInput}"
 								</div>
 							</div>
 
-							<div className="flex gap-4">
+							<div className="flex gap-3 pt-2">
 								<Button
 									variant="outline"
-									className="flex-1 h-12 rounded-2xl border-white/10 bg-slate-950/20 text-slate-500 font-black italic text-[10px] uppercase tracking-widest"
+									className="flex-1 h-11 rounded-xl border-white/10 bg-slate-950/20 text-slate-500 font-black italic text-[9px] uppercase tracking-widest"
 									onClick={() => setConfirmationData(null)}
 								>
 									RESET
 								</Button>
 								<Button
-									className="flex-[2] h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
+									className="flex-[2] h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 gap-3 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
 									onClick={handleConfirm}
 									disabled={loading}
 								>
 									{loading ? (
-										<Loader2 className="w-4 h-4 animate-spin mr-2" />
+										<Loader2 className="w-4 h-4 animate-spin" />
 									) : (
-										<Check className="w-4 h-4 mr-2" />
+										<Check className="w-4 h-4" />
 									)}
 									KONFIRMASI
 								</Button>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { getJakartaISODate } from "@/lib/date-utils"
 
 export async function GET() {
 	try {
@@ -18,7 +19,7 @@ export async function GET() {
       SELECT c.name, SUM(t.amount) as value
       FROM transactions t
       JOIN categories c ON t.category_id = c.id
-      WHERE t.type = 'expense' AND t.created_at >= date('now', '-30 days')
+      WHERE t.type = 'expense' AND date(t.created_at) >= date('now', '+7 hours', '-30 days')
       GROUP BY c.name
     `)
 
@@ -26,16 +27,19 @@ export async function GET() {
 		const lineRes = await db.execute(`
       SELECT date(created_at) as date, SUM(amount) as amount
       FROM transactions
-      WHERE type = 'expense' AND created_at >= date('now', '-7 days')
+      WHERE type = 'expense' AND date(created_at) >= date('now', '+7 hours', '-7 days')
       GROUP BY date(created_at)
       ORDER BY date ASC
     `)
 
 		// 4. Monthly Cycle (Salary Cycle)
-		const now = new Date()
-		let startYear = now.getFullYear()
-		let startMonth = now.getMonth() // 0-indexed
-		if (now.getDate() < salaryDay) {
+		// Get current Jakarta date info
+		const todayStr = getJakartaISODate()
+		const [todayY, todayM, todayD] = todayStr.split("-").map(Number)
+
+		let startYear = todayY
+		let startMonth = todayM - 1 // 0-indexed for JS Date logic later
+		if (todayD < salaryDay) {
 			startMonth -= 1
 			if (startMonth < 0) {
 				startMonth = 11
@@ -53,10 +57,11 @@ export async function GET() {
 			args: [cycleStart],
 		})
 
-		// Calculate days left
+		// Calculate days left relative to current Jakarta date
 		const start = new Date(startYear, startMonth, salaryDay)
 		const nextCycle = new Date(startYear, startMonth + 1, salaryDay)
-		const diffMs = nextCycle.getTime() - now.getTime()
+		const todayDate = new Date(todayY, todayM - 1, todayD)
+		const diffMs = nextCycle.getTime() - todayDate.getTime()
 		const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
 
 		const spent = Number(cycleRes.rows[0]?.total_spent) || 0

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { getJakartaISODate } from "@/lib/date-utils"
 
 export async function GET() {
 	try {
-		const today = new Date().toISOString().split("T")[0]
+		const today = getJakartaISODate()
 
 		// 1. Total Balance (Income - Expense)
 		const balanceRes = await db.execute(`

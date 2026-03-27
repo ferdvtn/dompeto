@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
 		// 3. Simpan ke database
 		const result = await db.execute({
 			sql: `
-        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+7 hours'))
         RETURNING *
       `,
 			args: [

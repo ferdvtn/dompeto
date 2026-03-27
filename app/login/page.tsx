@@ -42,27 +42,27 @@ export default function LoginPage() {
 			<div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-3xl opacity-30" />
 			<div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-3xl opacity-30" />
 
-			<div className="w-full max-w-md p-8 space-y-8 bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-[2.5rem] shadow-premium relative z-10">
-				<div className="space-y-4 text-center">
-					<div className="mx-auto w-16 h-16 rounded-3xl bg-emerald-600 flex items-center justify-center shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800">
-						<Wallet className="w-8 h-8 text-white" />
+			<div className="w-full max-w-sm p-6 space-y-6 bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-2xl shadow-premium relative z-10">
+				<div className="space-y-3 text-center">
+					<div className="mx-auto w-14 h-14 rounded-xl bg-emerald-600 flex items-center justify-center shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800">
+						<Wallet className="w-7 h-7 text-white" />
 					</div>
 					<div>
-						<h1 className="text-3xl font-black italic text-slate-100">Dompeto</h1>
-						<p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mt-1">
+						<h1 className="text-2xl font-black italic text-slate-100">Dompeto</h1>
+						<p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500 mt-1">
 							Premium Personal Finance
 						</p>
 					</div>
 				</div>
 
-				<form onSubmit={handleLogin} className="space-y-6">
-					<div className="space-y-4">
+				<form onSubmit={handleLogin} className="space-y-4">
+					<div className="space-y-3">
 						<div className="relative group">
 							<Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 transition-colors group-focus-within:text-emerald-500" />
 							<Input
 								type="password"
-								placeholder="Masukkan Password"
-								className="pl-12 h-14 bg-slate-950/40 border-white/5 rounded-2xl text-slate-100 font-bold placeholder:text-slate-700 focus-visible:ring-emerald-500/50 shadow-inner"
+								placeholder="Password"
+								className="pl-12 h-12 bg-slate-950/40 border-white/5 rounded-xl text-slate-100 font-bold placeholder:text-slate-700 focus-visible:ring-emerald-500/50 shadow-inner"
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
 								required
@@ -72,14 +72,14 @@ export default function LoginPage() {
 
 					<Button
 						type="submit"
-						className="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-base shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50"
+						className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-sm shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50"
 						disabled={loading}
 					>
-						{loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "MASUK"}
+						{loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "MASUK"}
 					</Button>
 				</form>
 
-				<p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest pt-4">
+				<p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest pt-2">
 					Bertenaga AI • Dompeto v2.0
 				</p>
 			</div>

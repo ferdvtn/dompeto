@@ -62,7 +62,8 @@ CREATE TABLE daily_stats (
   date TEXT PRIMARY KEY, -- YYYY-MM-DD
   transaction_count INTEGER DEFAULT 0,
   total_spent INTEGER DEFAULT 0,
-  chat_used INTEGER DEFAULT 0
+  chat_used INTEGER DEFAULT 0,
+  parse_used INTEGER DEFAULT 0
 );
 
 -- Initial Categories (Seeding)

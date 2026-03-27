@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { generateReport, detectIntent } from "@/lib/ai"
+import { getJakartaISODate } from "@/lib/date-utils"
 
 /**
  * Handle POST request for AI Chat Assistant.
@@ -9,7 +10,7 @@ import { generateReport, detectIntent } from "@/lib/ai"
 export async function POST(req: NextRequest) {
 	try {
 		const { message } = await req.json()
-		const today = new Date().toISOString().split("T")[0]
+		const today = getJakartaISODate()
 
 		// 1. Update Daily Stats (Chat Used)
 		try {
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
         SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        WHERE t.created_at >= datetime('now', 'localtime', '-7 days')
+        WHERE t.created_at >= datetime('now', '+7 hours', '-7 days')
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 			periodName = "7 hari terakhir"
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
         SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        WHERE date(t.created_at) = date(datetime('now', 'localtime'))
+        WHERE date(t.created_at) = date('now', '+7 hours')
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 			periodName = "Hari ini"
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
         SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        WHERE strftime('%Y-%m', t.created_at) = strftime('%Y-%m', datetime('now', 'localtime', '-1 month'))
+        WHERE strftime('%Y-%m', t.created_at) = strftime('%Y-%m', 'now', '+7 hours', '-1 month')
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 			periodName = "Bulan lalu"
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
         SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        WHERE strftime('%Y-%m', t.created_at) = strftime('%Y-%m', datetime('now', 'localtime'))
+        WHERE strftime('%Y-%m', t.created_at) = strftime('%Y-%m', 'now', '+7 hours')
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 			periodName = "Bulan ini"

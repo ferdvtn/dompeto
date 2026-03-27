@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { getJakartaISODate } from "@/lib/date-utils"
 
 /**
  * Menyimpan transaksi yang sudah dikonfirmasi pengguna.
@@ -33,15 +34,15 @@ export async function POST(req: NextRequest) {
 		// 2. Simpan Transaksi
 		const result = await db.execute({
 			sql: `
-        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, ai_confirmed)
-        VALUES (?, ?, ?, ?, ?, ?, 1)
+        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, ai_confirmed, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now', '+7 hours'))
         RETURNING *
       `,
 			args: [rawInput, amount, type, categoryId, description, notes],
 		})
 
 		// 3. Update Daily Stats
-		const today = new Date().toISOString().split("T")[0]
+		const today = getJakartaISODate()
 		await db.execute({
 			sql: `
         INSERT INTO daily_stats (date, transaction_count, total_spent)
