@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { parseTransaction } from "@/lib/ai"
+
+export async function GET() {
+	try {
+		const result = await db.execute({
+			sql: `
+        SELECT t.*, c.name as category_name, c.icon as category_icon 
+        FROM transactions t
+        LEFT JOIN categories c ON t.category_id = c.id
+        ORDER BY t.created_at DESC LIMIT 50
+      `,
+			args: [],
+		})
+		return NextResponse.json(result.rows)
+	} catch (error) {
+		console.error("GET Transactions Error:", error)
+		return NextResponse.json(
+			{ error: "Gagal mengambil data transaksi." },
+			{ status: 500 },
+		)
+	}
+}
+
+export async function POST(req: NextRequest) {
+	try {
+		const { rawInput } = await req.json()
+
+		if (!rawInput || typeof rawInput !== "string" || rawInput.length > 200) {
+			return NextResponse.json(
+				{ error: "Input tidak valid (maks 200 karakter)." },
+				{ status: 400 },
+			)
+		}
+
+		// 1. Ekstraksi data menggunakan AI
+		let parsedData = await parseTransaction(rawInput)
+
+		// FALLBACK: Sederhana jika AI gagal
+		if (!parsedData) {
+			const { parseRupiah } = await import("@/lib/rupiah")
+			const parts = rawInput.split(/\s+/)
+			const lastPart = parts[parts.length - 1]
+			const amount = parseRupiah(lastPart)
+
+			if (amount) {
+				const lowInput = rawInput.toLowerCase()
+				const isIncome = lowInput.includes("gajian") || lowInput.includes("terima")
+				parsedData = {
+					amount,
+					type: isIncome ? "income" : "expense",
+					category: isIncome ? "Pemasukan" : "Lainnya",
+					description: parts.slice(0, -1).join(" ") || rawInput,
+					notes: "Fallback",
+				}
+			}
+		}
+
+		if (!parsedData) {
+			return NextResponse.json(
+				{ error: "Gagal memproses transaksi. Coba format: 'beli bakso 15k'" },
+				{ status: 422 },
+			)
+		}
+
+		// 2. Cari category_id berdasarkan nama kategori dari AI
+		const catResult = await db.execute({
+			sql: "SELECT id FROM categories WHERE name = ? LIMIT 1",
+			args: [parsedData.category],
+		})
+		const categoryId = catResult.rows[0]?.id || 10 // Default ke 'Lainnya'
+
+		// 3. Simpan ke database
+		const result = await db.execute({
+			sql: `
+        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes)
+        VALUES (?, ?, ?, ?, ?, ?)
+        RETURNING *
+      `,
+			args: [
+				rawInput,
+				parsedData.amount,
+				parsedData.type,
+				categoryId,
+				parsedData.description,
+				parsedData.notes,
+			],
+		})
+
+		return NextResponse.json(result.rows[0], { status: 201 })
+	} catch (error) {
+		console.error("POST Transaction Error:", error)
+		return NextResponse.json(
+			{ error: "Terjadi kesalahan internal." },
+			{ status: 500 },
+		)
+	}
+}
