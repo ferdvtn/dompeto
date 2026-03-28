@@ -19,16 +19,16 @@ export async function GET() {
       SELECT c.name, SUM(t.amount) as value
       FROM transactions t
       JOIN categories c ON t.category_id = c.id
-      WHERE t.type = 'expense' AND date(t.created_at) >= date('now', '+7 hours', '-30 days')
+      WHERE t.type = 'expense' AND date(t.date) >= date('now', '+7 hours', '-30 days')
       GROUP BY c.name
     `)
 
 		// 3. Line Chart: Daily Trend (Last 7 days)
 		const lineRes = await db.execute(`
-      SELECT date(created_at) as date, SUM(amount) as amount
+      SELECT date(date) as date, SUM(amount) as amount
       FROM transactions
-      WHERE type = 'expense' AND date(created_at) >= date('now', '+7 hours', '-7 days')
-      GROUP BY date(created_at)
+      WHERE type = 'expense' AND date(date) >= date('now', '+7 hours', '-7 days')
+      GROUP BY date(date)
       ORDER BY date ASC
     `)
 
@@ -38,7 +38,7 @@ export async function GET() {
 		const [todayY, todayM, todayD] = todayStr.split("-").map(Number)
 
 		let startYear = todayY
-		let startMonth = todayM - 1 // 0-indexed for JS Date logic later
+		let startMonth = todayM - 1
 		if (todayD < salaryDay) {
 			startMonth -= 1
 			if (startMonth < 0) {
@@ -50,9 +50,10 @@ export async function GET() {
 
 		const cycleRes = await db.execute({
 			sql: `
-        SELECT SUM(amount) as total_spent
+        SELECT 
+          SUM(CASE WHEN type = 'expense' THEN amount ELSE -amount END) as total_spent
         FROM transactions
-        WHERE type = 'expense' AND date(created_at) >= ?
+        WHERE include_in_budget = 1 AND date(date) >= ?
       `,
 			args: [cycleStart],
 		})

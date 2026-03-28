@@ -1,4 +1,13 @@
-import { Calendar, Tag, FileText, Info, Loader2, Check, X } from "lucide-react"
+import {
+	Calendar,
+	Tag,
+	FileText,
+	Info,
+	Loader2,
+	Check,
+	X,
+	PieChart,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -47,6 +56,44 @@ export function TransactionDetailDrawer({
 		}
 		setIsEditingDate(false)
 	}, [transaction])
+
+	const handleToggleBudget = async () => {
+		if (!localTx) return
+		const newValue = localTx.include_in_budget === 1 ? 0 : 1
+		setIsUpdating(true)
+		try {
+			const res = await fetch(`/api/transactions/${localTx.id}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					description: localTx.description,
+					amount: localTx.amount,
+					type: localTx.type,
+					category_id: localTx.category_id,
+					date: localTx.date,
+					include_in_budget: newValue,
+				}),
+			})
+
+			if (!res.ok) throw new Error("Gagal memperbarui anggaran")
+
+			toast.success(
+				newValue === 1 ? "Dilibatkan dalam anggaran" : "Dikecualikan dari anggaran",
+			)
+
+			// Update UI immediately inside the drawer
+			setLocalTx((prev: any) => ({
+				...prev,
+				include_in_budget: newValue,
+			}))
+
+			if (onUpdate) onUpdate()
+		} catch (error: any) {
+			toast.error(error.message)
+		} finally {
+			setIsUpdating(false)
+		}
+	}
 
 	const handleUpdateDate = async () => {
 		if (!localTx) return
@@ -173,7 +220,7 @@ export function TransactionDetailDrawer({
 								<div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
 									<Info className="w-3 h-3" /> Input Asli
 								</div>
-								<div className="text-[13px] font-bold italic text-slate-300">
+								<div className="text-[13px] font-bold italic text-slate-300 break-words whitespace-pre-wrap">
 									"{localTx.raw_input}"
 								</div>
 							</div>
@@ -187,14 +234,55 @@ export function TransactionDetailDrawer({
 										{localTx.category_name}
 									</div>
 								</div>
-								<div className="flex-1 p-3.5 bg-slate-900/40 border border-white/5 rounded-2xl space-y-1 shadow-sm">
+								<div className="flex-1 p-3.5 bg-slate-900/40 border border-white/5 rounded-2xl space-y-1 shadow-sm overflow-hidden">
 									<div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
 										<FileText className="w-3 h-3" /> Catatan
 									</div>
-									<div className="text-[13px] font-bold italic text-slate-400">
+									<div className="text-[13px] font-bold italic text-slate-400 break-words whitespace-pre-wrap">
 										{localTx.notes || "-"}
 									</div>
 								</div>
+							</div>
+
+							{/* Include in Budget Toggle */}
+							<div className="p-3.5 bg-slate-900/40 rounded-2xl flex items-center justify-between border border-white/5 shadow-inner">
+								<div className="flex items-center gap-3">
+									<div
+										className={cn(
+											"p-2 rounded-xl transition-all duration-300",
+											localTx.include_in_budget === 1
+												? "bg-emerald-500/10 text-emerald-400"
+												: "bg-slate-800 text-slate-600",
+										)}
+									>
+										<PieChart className="w-3.5 h-3.5" />
+									</div>
+									<div className="text-left">
+										<p className="text-[10px] font-black italic text-slate-100 uppercase tracking-tight">
+											Libatkan Anggaran
+										</p>
+										<p className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">
+											Pengaruhi sisa kuota gaji
+										</p>
+									</div>
+								</div>
+								<button
+									onClick={handleToggleBudget}
+									disabled={isUpdating}
+									className={cn(
+										"w-10 h-5 rounded-full relative transition-all duration-300 active:scale-95 shadow-lg",
+										localTx.include_in_budget === 1
+											? "bg-emerald-600 shadow-emerald-500/10"
+											: "bg-slate-800",
+									)}
+								>
+									<div
+										className={cn(
+											"absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
+											localTx.include_in_budget === 1 ? "left-6" : "left-1",
+										)}
+									/>
+								</button>
 							</div>
 						</div>
 

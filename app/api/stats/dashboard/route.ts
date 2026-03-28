@@ -20,10 +20,10 @@ export async function GET() {
 		const dailyRes = await db.execute({
 			sql: `
         SELECT 
-          SUM(amount) as spent_today,
+          SUM(CASE WHEN type = 'expense' THEN amount ELSE -amount END) as spent_today,
           COUNT(*) as count_today
         FROM transactions 
-        WHERE type = 'expense' AND date(date) = ?
+        WHERE date(date) = ?
       `,
 			args: [today],
 		})

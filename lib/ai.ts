@@ -84,7 +84,7 @@ ATURAN PARSING:
 export interface IntentResult {
 	label: string
 	days: number
-	intent: "period" | "largest" | "all" | "unclear"
+	intent: "period" | "largest" | "all" | "write" | "unclear"
 }
 
 /**
@@ -95,22 +95,23 @@ export async function detectIntent(message: string): Promise<IntentResult> {
 Tugas: Analisis maksud periode waktu dari pesan pengguna dan kembalikan JSON.
 
 EKSTRAKSI:
-- "intent": "period" (untuk rentang waktu), "largest" (untuk transaksi terbesar), "all" (semua data), "unclear" (jika pesan bukan pertanyaan tentang laporan/data).
-- "days": jumlah total hari dalam angka.
-- "label": nama periode yang ramah.
+- "intent": 
+  * "period": Untuk pertanyaan rekap/analisa rentang waktu (misal: "rekap hari ini", "persentase makan").
+  * "largest": Untuk mencari transaksi paling besar (misal: "top pengeluaran", "paling mahal").
+  * "all": Untuk melihat semua data tanpa filter waktu tertentu.
+  * "write": Untuk perintah manipulasi data (catat, hapus, edit).
+  * "unclear": Hanya jika pesan benar-benar tidak ada hubungannya dengan keuangan (misal: "halo", "cuaca hari ini").
+- "days": Jumlah TOTAL hari dalam angka (Default: 30).
+- "label": Nama periode yang ramah (misal: "Hari ini", "7 hari terakhir").
 
-ATURAN PERHITUNGAN HARI:
-- "hari ini": 0 hari
-- "minggu ini/sepekan": 7 hari
-- "bulan ini": 30 hari
-- Kalkulasikan total hari jika ada angka (misal: "3 hari", "2 minggu").
-
-IDENTIFIKASI "UNCLEAR":
-- Jika pengguna hanya menyapa (halo, hi), bicara di luar konteks keuangan, atau perintah tidak jelas, gunakan intent: "unclear".
+CONTOH:
+- "Analisa persentase makan" -> intent: "period", days: 30, label: "Bulan ini"
+- "Transaksi terbesar minggu ini" -> intent: "largest", days: 7, label: "Minggu ini"
+- "Habis berapa kemarin?" -> intent: "period", days: 1, label: "Kemarin"
 
 FORMAT OUTPUT (JSON):
 {
-  "intent": "period" | "largest" | "all" | "unclear",
+  "intent": "period" | "largest" | "all" | "write" | "unclear",
   "days": <number>,
   "label": "<string>"
 }
@@ -147,9 +148,18 @@ export async function generateReport(
 	dbSummary: string,
 ): Promise<string> {
 	const systemInstruction = `
-Kamu adalah asisten keuangan personal Dompeto yang ceria dan informatif.
-Jawablah dalam Bahasa Indonesia yang santai tapi profesional.
-Gunakan data di bawah sebagai satu-satunya rujukan angka.
+Kamu adalah analis keuangan Dompeto yang sangat efisien dan TO-THE-POINT.
+ATURAN UTAMA:
+1. JANGAN HALUSINASI. Jika data tidak ada atau pesan user tidak jelas, jawab jujur bahwa Anda tidak bisa memprosesnya.
+2. JANGAN gunakan salam pembuka/penutup.
+3. JANGAN menyebutkan nama metadata seperti "[KONTEKS_ANGGARAN]" atau "[REKAP_TRANSAKSI]".
+4. Jika instruksi menyebutkan [UNCLEAR], berikan respon: "Maaf, pertanyaan kurang jelas. Silakan tanya spesifik seperti 'Rekap hari ini' atau 'Sisa budget'."
+5. Jika instruksi menyebutkan [INSTRUKSI] Tolak CRUD: "Maaf, saya asisten baca-saja. Gunakan tombol CATAT untuk menambah data."
+
+PANDUAN DATA:
+- Gunakan [KONTEKS_ANGGARAN] untuk sisa kuota gaji/budget.
+- Gunakan [REKAP_TRANSAKSI] untuk total dan analisis pengeluaran.
+- Gabungkan info keduanya secara natural guna menjawab user (misal: "Makan Anda 25% dari total, dan sisa budget gaji Rp 5jt").
 
 DATA KEUANGAN:
 ${dbSummary}

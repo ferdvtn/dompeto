@@ -2,6 +2,7 @@
 
 import { CategoryIcon } from "@/components/category-icon"
 import { cn } from "@/lib/utils"
+import { PieChart } from "lucide-react"
 
 interface TransactionItemProps {
 	tx: any
@@ -43,6 +44,14 @@ export function TransactionItem({ tx, onClick }: TransactionItemProps) {
 				</div>
 			</div>
 			<div className="flex items-center gap-4">
+				{tx.include_in_budget === 0 && (
+					<div className="flex items-center gap-1 px-2 py-0.5 bg-slate-800/50 rounded-lg border border-white/5 shadow-inner">
+						<PieChart className="w-2.5 h-2.5 text-slate-600" />
+						<span className="text-[7px] font-black uppercase text-slate-600 tracking-tighter">
+							Skip
+						</span>
+					</div>
+				)}
 				<div
 					className={cn(
 						"text-xs font-black italic",

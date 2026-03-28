@@ -49,6 +49,7 @@ CREATE TABLE transactions (
   notes TEXT,
   ai_confirmed INTEGER DEFAULT 0,
   date DATETIME,
+  include_in_budget INTEGER DEFAULT 1,
   created_at DATETIME DEFAULT (datetime('now', '+7 hours')),
   updated_at DATETIME DEFAULT (datetime('now', '+7 hours'))
 );

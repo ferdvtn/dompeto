@@ -7,3 +7,9 @@ export function getJakartaISODate() {
 	const jakartaTime = new Date(now.getTime() + 7 * 60 * 60 * 1000)
 	return jakartaTime.toISOString().split("T")[0]
 }
+
+export function getJakartaDateTime() {
+	const now = new Date()
+	const jakartaTime = new Date(now.getTime() + 7 * 60 * 60 * 1000)
+	return jakartaTime.toISOString().replace("T", " ").split(".")[0]
+}

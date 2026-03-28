@@ -16,11 +16,11 @@ import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 
 const CHAT_SUGGESTIONS = [
-	"Total keluar hari ini?",
-	"Sisa budget gaji?",
-	"Persentase makan?",
-	"Top pengeluaran bulan ini?",
-	"Bandingkan dengan kemarin",
+	"Rekap pengeluaran hari ini",
+	"Sisa budget gaji saya?",
+	"Analisa persentase makan",
+	"Transaksi terbesar minggu ini",
+	"Total pemasukan bulan ini",
 ]
 
 export default function ChatPage() {
@@ -29,6 +29,7 @@ export default function ChatPage() {
 	const [input, setInput] = useState("")
 	const [loading, setLoading] = useState(false)
 	const scrollRef = useRef<HTMLDivElement>(null)
+	const isInitialMount = useRef(true)
 
 	// Load history on mount
 	useEffect(() => {
@@ -59,8 +60,13 @@ export default function ChatPage() {
 	}, [messages])
 
 	useEffect(() => {
-		if (messages.length > 1) {
-			scrollRef.current?.scrollIntoView({ behavior: "smooth" })
+		if (messages.length > 0) {
+			if (isInitialMount.current) {
+				scrollRef.current?.scrollIntoView({ behavior: "auto" })
+				isInitialMount.current = false
+			} else {
+				scrollRef.current?.scrollIntoView({ behavior: "smooth" })
+			}
 		}
 	}, [messages])
 
@@ -137,7 +143,7 @@ export default function ChatPage() {
 						</div>
 						<div
 							className={cn(
-								"p-2.5 rounded-xl text-[11px] font-bold max-w-[85%] shadow-premium italic leading-relaxed",
+								"p-2.5 rounded-xl text-[11px] font-bold max-w-[85%] shadow-premium italic leading-relaxed whitespace-pre-wrap",
 								msg.role === "user"
 									? "bg-emerald-600 text-white rounded-tr-none"
 									: "bg-slate-900/60 border border-white/5 text-slate-200 rounded-tl-none",

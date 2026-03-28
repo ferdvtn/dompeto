@@ -23,13 +23,47 @@ export async function POST(req: NextRequest) {
 			console.error("Failed to update daily stats:", e)
 		}
 
-		// 2. Detect Intent using AI
+		// 2. Fetch Settings for Budget & Cycle
+		const settingsRes = await db.execute("SELECT key, value FROM settings")
+		const settings: { [key: string]: string } = {}
+		settingsRes.rows.forEach((row: any) => {
+			settings[row.key] = row.value
+		})
+
+		const salaryDay = Number(settings.salary_day || "25")
+		const budget = Number(settings.monthly_budget || "0")
+
+		// Calculate Cycle Start (same as charts API)
+		const [todayY, todayM, todayD] = today.split("-").map(Number)
+		let startYear = todayY
+		let startMonth = todayM - 1
+		if (todayD < salaryDay) {
+			startMonth -= 1
+			if (startMonth < 0) {
+				startMonth = 11
+				startYear -= 1
+			}
+		}
+		const cycleStart = `${startYear}-${String(startMonth + 1).padStart(2, "0")}-${String(salaryDay).padStart(2, "0")}`
+
+		// Fetch Net Spent for current cycle
+		const cycleRes = await db.execute({
+			sql: `
+        SELECT SUM(CASE WHEN type = 'expense' THEN amount ELSE -amount END) as spent
+        FROM transactions
+        WHERE include_in_budget = 1 AND date(date) >= ?
+      `,
+			args: [cycleStart],
+		})
+		const spent = Number(cycleRes.rows[0]?.spent || 0)
+
+		// 3. Detect Intent using AI
 		const intentData = await detectIntent(message)
 
 		let sql = ""
 		let periodName = intentData.label
 
-		// 3. Select SQL based on Intent
+		// 4. Select SQL based on Intent
 		if (intentData.intent === "unclear") {
 			sql = "" // No data needed
 		} else if (intentData.intent === "largest") {
@@ -45,7 +79,7 @@ export async function POST(req: NextRequest) {
         SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        WHERE strftime('%Y-%m', t.created_at) = strftime('%Y-%m', 'now', '+7 hours', '-1 month')
+        WHERE strftime('%Y-%m', t.date) = strftime('%Y-%m', 'now', '+7 hours', '-1 month')
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 		} else {
@@ -54,41 +88,42 @@ export async function POST(req: NextRequest) {
         SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        WHERE t.created_at >= datetime('now', '+7 hours', '-${intentData.days} days')
+        WHERE t.date >= datetime('now', '+7 hours', '-${intentData.days} days')
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 		}
 
 		const result = sql ? await db.execute(sql) : { rows: [] }
 
-		// 4. Format Summary
-		let dbSummary = ""
+		// 5. Format Summary
+		let dbSummary = `[KONTEKS_ANGGARAN]
+Siklus Gaji: ${salaryDay}-ke-${salaryDay}
+Limit: Rp ${budget.toLocaleString("id-ID")}
+Terpakai (Net): Rp ${spent.toLocaleString("id-ID")}
+Sisa Budget: Rp ${(budget - spent).toLocaleString("id-ID")}
+Status: ${spent > budget ? "OVER BUDGET" : "Aman"}\n\n`
+
 		if (intentData.intent === "unclear") {
-			dbSummary = `Pesan pengguna kurang spesifik mengenai data keuangan. 
-Berikan salam dan beritahu pengguna bahwa Anda bisa membantu menyajikan laporan keuangan.
-CONTOH PERTANYAAN YANG BISA DIAJUKAN:
-- "Habis berapa ya hari ini?"
-- "Rekap pengeluaran 7 hari terakhir"
-- "Apa saja transaksi terbesar saya?"
-- "Berapa total pemasukan bulan ini?"
-- "Review pengeluaran 2 minggu ke belakang"`
+			dbSummary += `[UNCLEAR]`
+		} else if (intentData.intent === "write") {
+			dbSummary += `[INSTRUKSI] Tolak CRUD`
 		} else {
-			dbSummary = `=== DATA KEUANGAN ===\nPeriode: ${periodName}\n\n`
+			dbSummary += `[REKAP_TRANSAKSI_${periodName.toUpperCase()}]
+(Mencakup semua transaksi termasuk yang di-skip dari budget)
+`
 			if (result.rows.length === 0) {
-				dbSummary += "Tidak ditemukan data transaksi untuk periode ini."
+				dbSummary += "Tidak ditemukan data."
 			} else {
 				let totalExpense = 0
 				let totalIncome = 0
-				let breakdown = "Breakdown per kategori:\n"
+				let breakdown = "Kategori:\n"
 				result.rows.forEach((row: any) => {
 					if (row.type === "expense") {
 						totalExpense += Number(row.total || 0)
-						breakdown += `- ${row.category || "Lainnya"}: Rp ${Number(row.total).toLocaleString("id-ID")} (${row.count}x)\n`
+						breakdown += `- ${row.category}: Rp ${Number(row.total).toLocaleString("id-ID")} (${row.count}x)\n`
 					} else if (row.type === "income") {
 						totalIncome += Number(row.total || 0)
-						breakdown += `- ${row.category || "Pemasukan"}: Rp ${Number(row.total).toLocaleString("id-ID")} (${row.count}x)\n`
-					} else {
-						breakdown += `- ${row.category || "Lainnya"}: Rp ${Number(row.amount).toLocaleString("id-ID")} (${row.description || "Tanpa deskripsi"})\n`
+						breakdown += `- ${row.category}: Rp ${Number(row.total).toLocaleString("id-ID")} (${row.count}x)\n`
 					}
 				})
 				if (intentData.intent === "largest") {

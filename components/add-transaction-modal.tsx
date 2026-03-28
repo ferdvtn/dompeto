@@ -9,6 +9,7 @@ import {
 	Calendar,
 	Receipt,
 	Info,
+	PieChart,
 } from "lucide-react"
 import {
 	Drawer,
@@ -42,6 +43,7 @@ export function AddTransactionModal({
 	const [rawInput, setRawInput] = useState("")
 	const [loading, setLoading] = useState(false)
 	const [confirmationData, setConfirmationData] = useState<any>(null)
+	const [includeInBudget, setIncludeInBudget] = useState(true)
 	const inputRef = useRef<HTMLInputElement>(null)
 
 	const handleParse = async (inputToParse?: string) => {
@@ -58,6 +60,7 @@ export function AddTransactionModal({
 			const data = await res.json()
 			if (data.error) throw new Error(data.error)
 			setConfirmationData(data)
+			setIncludeInBudget(true) // Default to true for every new parse
 			if (inputToParse) setRawInput(inputToParse)
 		} catch (err: any) {
 			toast.error(err.message || "Gagal memproses input")
@@ -72,7 +75,11 @@ export function AddTransactionModal({
 			const res = await fetch("/api/transactions/confirm", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ ...confirmationData, rawInput }),
+				body: JSON.stringify({
+					...confirmationData,
+					rawInput,
+					include_in_budget: includeInBudget ? 1 : 0,
+				}),
 			})
 			if (!res.ok) throw new Error("Gagal menyimpan transaksi")
 			toast.success("Transaksi berhasil dicatat")
@@ -205,6 +212,47 @@ export function AddTransactionModal({
 								<div className="text-[11px] text-slate-300 font-bold italic bg-slate-900/40 p-2.5 rounded-xl border border-white/5 shadow-inner leading-relaxed">
 									"{confirmationData.description || rawInput}"
 								</div>
+							</div>
+
+							{/* Include in Budget Toggle */}
+							<div className="flex items-center justify-between w-full p-3 bg-slate-900/60 rounded-2xl border border-white/5 shadow-inner group transition-all">
+								<div className="flex items-center gap-3">
+									<div
+										className={cn(
+											"p-2 rounded-xl transition-all duration-300",
+											includeInBudget
+												? "bg-emerald-500/10 text-emerald-400"
+												: "bg-slate-800 text-slate-600",
+										)}
+									>
+										<PieChart className="w-3.5 h-3.5" />
+									</div>
+									<div className="text-left">
+										<p className="text-[10px] font-black italic text-slate-100 uppercase tracking-tight">
+											Libatkan Anggaran
+										</p>
+										<p className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">
+											Pengaruhi sisa kuota gaji
+										</p>
+									</div>
+								</div>
+								<button
+									type="button"
+									onClick={() => setIncludeInBudget(!includeInBudget)}
+									className={cn(
+										"w-10 h-5 rounded-full relative transition-all duration-300 active:scale-95 shadow-lg",
+										includeInBudget
+											? "bg-emerald-600 shadow-emerald-500/10"
+											: "bg-slate-800",
+									)}
+								>
+									<div
+										className={cn(
+											"absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
+											includeInBudget ? "left-6" : "left-1",
+										)}
+									/>
+								</button>
 							</div>
 
 							<div className="flex gap-3 pt-2">

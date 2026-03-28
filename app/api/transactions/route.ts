@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { getJakartaDateTime } from "@/lib/date-utils"
 import { parseTransaction } from "@/lib/ai"
 
 export async function GET() {
@@ -74,8 +75,8 @@ export async function POST(req: NextRequest) {
 		// 3. Simpan ke database
 		const result = await db.execute({
 			sql: `
-        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, date, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+7 hours'), datetime('now', '+7 hours'), datetime('now', '+7 hours'))
+        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, include_in_budget, date, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+7 hours'), datetime('now', '+7 hours'))
         RETURNING *
       `,
 			args: [
@@ -85,6 +86,8 @@ export async function POST(req: NextRequest) {
 				categoryId,
 				parsedData.description,
 				parsedData.notes,
+				1, // Default to included in budget for chat entries
+				getJakartaDateTime(), // Current Jakarta time as business date
 			],
 		})
 

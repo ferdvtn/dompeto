@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getJakartaISODate } from "@/lib/date-utils"
+import { getJakartaISODate, getJakartaDateTime } from "@/lib/date-utils"
 
 /**
  * Menyimpan transaksi yang sudah dikonfirmasi pengguna.
  */
 export async function POST(req: NextRequest) {
 	try {
-		const data = await req.json()
-		const { rawInput, amount, type, category, description, notes } = data
+		const {
+			rawInput,
+			amount,
+			type,
+			category,
+			description,
+			notes,
+			date,
+			include_in_budget = 1,
+		} = await req.json()
 
 		// 1. Cari category_id (Case-insensitive & Trimmed)
 		const catResult = await db.execute({
@@ -34,11 +42,20 @@ export async function POST(req: NextRequest) {
 		// 2. Simpan Transaksi
 		const result = await db.execute({
 			sql: `
-        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, date, ai_confirmed, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+7 hours'), 1, datetime('now', '+7 hours'), datetime('now', '+7 hours'))
+        INSERT INTO transactions (raw_input, amount, type, category_id, description, notes, date, ai_confirmed, include_in_budget, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, datetime('now', '+7 hours'), datetime('now', '+7 hours'))
         RETURNING *
       `,
-			args: [rawInput, amount, type, categoryId, description, notes],
+			args: [
+				rawInput,
+				amount,
+				type,
+				categoryId,
+				description,
+				notes,
+				date || getJakartaDateTime(),
+				Number(include_in_budget ?? 1),
+			],
 		})
 
 		// 3. Update Daily Stats
