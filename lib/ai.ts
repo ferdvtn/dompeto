@@ -184,3 +184,60 @@ ${dbSummary}
 		return "Maaf, terjadi gangguan pada sistem laporan."
 	}
 }
+
+/**
+ * Menganalisis gambar struk menggunakan Groq Vision (Llama 3.2 Vision).
+ * Mengembalikan daftar item transaksi yang ditemukan.
+ */
+export async function scanReceipt(base64Image: string) {
+	const systemInstruction = `
+Kamu adalah OCR & Financial Parser cerdas. Tugasmu mengekstrak item belanja dari gambar struk.
+Kembalikan data dalam format JSON murni.
+
+ATURAN EKSTRAKSI:
+1. Hanya ambil item belanja riil (barang/jasa yang dibeli).
+2. ABAIKAN/BUANG item berikut: 
+   - DISKON, PROMO, VOUCHER, POTONGAN HARGA (pindahkan nilainya untuk mengurangi harga item terkait jika perlu, tapi JANGAN masukkan sebagai item terpisah).
+   - "ANDA HEMAT", "SAVINGS", "TOTAL DISKON".
+   - Item dengan harga 0 atau negatif.
+   - Pajak (PPN/Tax) dan Service Charge (masukkan ke item 'Lainnya' jika ada, atau abaikan jika kecil).
+3. Untuk setiap item, tentukan kategori yang paling cocok:
+   - Makan & Minuman, Transport, Belanja, Hiburan, Kesehatan, Tagihan, Pendidikan, Invest, Lainnya.
+4. Estimasi tanggal struk (format YYYY-MM-DD). Jika tidak ada, gunakan null.
+
+FORMAT OUTPUT (JSON):
+{
+  "date": "YYYY-MM-DD",
+  "items": [
+    { "name": "Nama Barang", "amount": 15000, "category": "Makan & Minuman" },
+    ...
+  ]
+}
+`.trim()
+
+	try {
+		const chatCompletion = await groq.chat.completions.create({
+			messages: [
+				{
+					role: "user",
+					content: [
+						{ type: "text", text: systemInstruction },
+						{
+							type: "image_url",
+							image_url: { url: `data:image/jpeg;base64,${base64Image}` },
+						},
+					],
+				},
+			],
+			model: "llama-3.2-90b-vision-preview",
+			response_format: { type: "json_object" },
+			temperature: 0,
+		})
+
+		const responseText = chatCompletion.choices[0]?.message?.content || "{}"
+		return JSON.parse(responseText)
+	} catch (error) {
+		console.error("Groq Vision Error:", error)
+		throw new Error("Gagal menganalisis struk")
+	}
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
 	Plus,
 	Sparkles,
@@ -10,6 +10,9 @@ import {
 	Receipt,
 	Info,
 	PieChart,
+	Image as ImageIcon,
+	X,
+	ShoppingCart,
 } from "lucide-react"
 import {
 	Drawer,
@@ -39,12 +42,22 @@ export function AddTransactionModal({
 	children: React.ReactElement
 	onSuccess?: () => void
 }) {
+	const [mounted, setMounted] = useState(false)
 	const [isOpen, setIsOpen] = useState(false)
 	const [rawInput, setRawInput] = useState("")
 	const [loading, setLoading] = useState(false)
 	const [confirmationData, setConfirmationData] = useState<any>(null)
 	const [includeInBudget, setIncludeInBudget] = useState(true)
 	const inputRef = useRef<HTMLInputElement>(null)
+	const fileInputRef = useRef<HTMLInputElement>(null)
+	const [isScanning, setIsScanning] = useState(false)
+	const [scanResult, setScanResult] = useState<any>(null)
+
+	useEffect(() => {
+		setMounted(true)
+	}, [])
+
+	if (!mounted) return children
 
 	const handleParse = async (inputToParse?: string) => {
 		const targetInput = inputToParse || rawInput
@@ -60,12 +73,92 @@ export function AddTransactionModal({
 			const data = await res.json()
 			if (data.error) throw new Error(data.error)
 			setConfirmationData(data)
-			setIncludeInBudget(true) // Default to true for every new parse
+			setIncludeInBudget(true)
 			if (inputToParse) setRawInput(inputToParse)
 		} catch (err: any) {
 			toast.error(err.message || "Gagal memproses input")
 		} finally {
 			setLoading(false)
+		}
+	}
+
+	const compressImage = (file: File): Promise<string> => {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader()
+			reader.onload = (e) => {
+				const img = new Image()
+				img.onload = () => {
+					const canvas = document.createElement("canvas")
+					let width = img.width
+					let height = img.height
+
+					// Max dimension 1200px (enough for OCR but small enough for API)
+					const MAX_SIZE = 1200
+					if (width > height) {
+						if (width > MAX_SIZE) {
+							height *= MAX_SIZE / width
+							width = MAX_SIZE
+						}
+					} else {
+						if (height > MAX_SIZE) {
+							width *= MAX_SIZE / height
+							height = MAX_SIZE
+						}
+					}
+
+					canvas.width = width
+					canvas.height = height
+					const ctx = canvas.getContext("2d")
+					ctx?.drawImage(img, 0, 0, width, height)
+					// Compress to 0.7 quality
+					const base64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1]
+					resolve(base64)
+				}
+				img.onerror = reject
+				img.src = e.target?.result as string
+			}
+			reader.onerror = reject
+			reader.readAsDataURL(file)
+		})
+	}
+
+	const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+
+		setIsScanning(true)
+		setLoading(true)
+		try {
+			const base64 = await compressImage(file)
+
+			const res = await fetch("/api/transactions/scan", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ image: base64 }),
+			})
+
+			if (!res.ok) {
+				const errorText = await res.text()
+				let message = "Gagal memproses struk"
+				try {
+					const errorData = JSON.parse(errorText)
+					message = errorData.error || message
+				} catch {
+					message = `Server Error (${res.status})`
+				}
+				throw new Error(message)
+			}
+
+			const data = await res.json()
+			setScanResult(data.scanResult)
+			toast.success("Gambar struk berhasil diproses")
+		} catch (err: any) {
+			console.error("Scan Error Details:", err)
+			toast.error(err.message || "Gagal memproses struk")
+		} finally {
+			setIsScanning(false)
+			setLoading(false)
+			if (fileInputRef.current) fileInputRef.current.value = ""
 		}
 	}
 
@@ -84,14 +177,44 @@ export function AddTransactionModal({
 			if (!res.ok) throw new Error("Gagal menyimpan transaksi")
 			toast.success("Transaksi berhasil dicatat")
 			setIsOpen(false)
-			setRawInput("")
-			setConfirmationData(null)
+			resetForm()
 			onSuccess?.()
 		} catch (err: any) {
 			toast.error(err.message)
 		} finally {
 			setLoading(false)
 		}
+	}
+
+	const handleBulkConfirm = async () => {
+		if (!scanResult) return
+		setLoading(true)
+		try {
+			const res = await fetch("/api/transactions/bulk", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					items: scanResult.items,
+					date: scanResult.date,
+				}),
+			})
+			if (!res.ok) throw new Error("Gagal menyimpan semua transaksi")
+			toast.success(`${scanResult.items.length} transaksi berhasil dicatat`)
+			setIsOpen(false)
+			resetForm()
+			onSuccess?.()
+		} catch (err: any) {
+			toast.error(err.message)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	const resetForm = () => {
+		setRawInput("")
+		setConfirmationData(null)
+		setScanResult(null)
+		setIsScanning(false)
 	}
 
 	const formatIDR = (amount: number) => {
@@ -107,10 +230,7 @@ export function AddTransactionModal({
 			open={isOpen}
 			onOpenChange={(o) => {
 				setIsOpen(o)
-				if (!o) {
-					setRawInput("")
-					setConfirmationData(null)
-				}
+				if (!o) resetForm()
 			}}
 		>
 			<DrawerTrigger asChild>{children}</DrawerTrigger>
@@ -123,27 +243,49 @@ export function AddTransactionModal({
 							<Sparkles
 								className={cn("w-5 h-5 text-emerald-500", loading && "animate-pulse")}
 							/>
-							AI Dompeto
+							{scanResult ? "Hasil Scan Struk" : "AI Dompeto"}
 						</DrawerTitle>
 					</DrawerHeader>
 
 					<div className="space-y-5 py-2 font-sans">
-						{!confirmationData ? (
+						{!confirmationData && !scanResult ? (
 							<div className="space-y-5">
 								<div className="space-y-4">
 									<div className="space-y-2">
 										<label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
-											Ketik Transaksi
+											Ketik atau Scan
 										</label>
-										<div className="relative group">
-											<Input
-												ref={inputRef}
-												placeholder="Contoh: kopi 20k..."
-												className="bg-slate-900/40 border-white/5 h-11 rounded-xl text-sm font-bold italic shadow-inner focus-visible:ring-emerald-500 text-slate-100 placeholder:text-slate-700 px-4"
-												value={rawInput}
-												onChange={(e) => setRawInput(e.target.value)}
-												onKeyDown={(e) => e.key === "Enter" && handleParse()}
+										<div className="flex gap-2">
+											<div className="relative group flex-1">
+												<Input
+													ref={inputRef}
+													placeholder="Contoh: kopi 20k..."
+													className="bg-slate-900/40 border-white/5 h-11 rounded-xl text-sm font-bold italic shadow-inner focus-visible:ring-emerald-500 text-slate-100 placeholder:text-slate-700 px-4"
+													value={rawInput}
+													onChange={(e) => setRawInput(e.target.value)}
+													onKeyDown={(e) => e.key === "Enter" && handleParse()}
+												/>
+											</div>
+											<input
+												type="file"
+												ref={fileInputRef}
+												className="hidden"
+												accept="image/*"
+												onChange={handleScan}
 											/>
+											<Button
+												variant="outline"
+												size="icon"
+												className="h-11 w-11 shrink-0 rounded-xl bg-slate-900/40 border-white/5 text-emerald-500 hover:text-emerald-400 hover:bg-slate-900 transition-all active:scale-95"
+												onClick={() => fileInputRef.current?.click()}
+												disabled={loading}
+											>
+												{isScanning ? (
+													<Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
+												) : (
+													<ImageIcon className="w-5 h-5" />
+												)}
+											</Button>
 										</div>
 									</div>
 
@@ -162,6 +304,55 @@ export function AddTransactionModal({
 												</button>
 											))}
 										</div>
+									</div>
+								</div>
+							</div>
+						) : scanResult ? (
+							<div className="space-y-4">
+								<div className="p-4 bg-slate-800/40 rounded-2xl border border-white/10 space-y-3">
+									<div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
+										<span className="flex items-center gap-1.5">
+											<ShoppingCart className="w-3 h-3" /> {scanResult.items.length} Item
+										</span>
+										<span className="flex items-center gap-1.5">
+											<Calendar className="w-3 h-3" />{" "}
+											{scanResult.date || "Tanggal hari ini"}
+										</span>
+									</div>
+
+									<div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1 custom-scrollbar">
+										{scanResult.items.map((item: any, idx: number) => (
+											<div
+												key={idx}
+												className="flex justify-between items-start py-2 border-b border-white/5 last:border-0 group"
+											>
+												<div className="space-y-0.5">
+													<div className="text-[11px] font-bold text-slate-100 italic transition-colors group-hover:text-emerald-400">
+														{item.name}
+													</div>
+													<div className="text-[9px] font-black uppercase text-slate-500 tracking-tighter">
+														{item.category}
+													</div>
+												</div>
+												<div className="text-[11px] font-black italic text-red-400">
+													{formatIDR(item.amount)}
+												</div>
+											</div>
+										))}
+									</div>
+
+									<div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex justify-between items-center">
+										<span className="text-[10px] font-black uppercase text-emerald-500/80">
+											Estimasi Total
+										</span>
+										<span className="text-sm font-black italic text-emerald-400">
+											{formatIDR(
+												scanResult.items.reduce(
+													(acc: number, item: any) => acc + item.amount,
+													0,
+												),
+											)}
+										</span>
 									</div>
 								</div>
 							</div>
@@ -203,7 +394,6 @@ export function AddTransactionModal({
 									</div>
 								</div>
 
-								{/* Include in Budget Toggle */}
 								<div className="flex items-center justify-between w-full p-3 bg-slate-800/60 rounded-2xl border border-white/10 shadow-inner group transition-all">
 									<div className="flex items-center gap-3">
 										<div
@@ -249,7 +439,7 @@ export function AddTransactionModal({
 				</div>
 
 				<div className="p-6 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,1.5rem))] border-t border-white/5 bg-[#070b1a]/80 backdrop-blur-md shrink-0">
-					{!confirmationData ? (
+					{!confirmationData && !scanResult ? (
 						<Button
 							className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
 							onClick={() => handleParse()}
@@ -262,6 +452,28 @@ export function AddTransactionModal({
 							)}
 							PROSES AI
 						</Button>
+					) : scanResult ? (
+						<div className="flex gap-3">
+							<Button
+								variant="outline"
+								className="flex-1 h-12 rounded-xl border-white/10 bg-slate-950/20 text-slate-500 font-black italic text-[9px] uppercase tracking-widest"
+								onClick={() => setScanResult(null)}
+							>
+								BATAL
+							</Button>
+							<Button
+								className="flex-[2] h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 gap-3 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
+								onClick={handleBulkConfirm}
+								disabled={loading}
+							>
+								{loading ? (
+									<Loader2 className="w-4 h-4 animate-spin" />
+								) : (
+									<Check className="w-4 h-4" />
+								)}
+								SIMPAN SEMUA
+							</Button>
+						</div>
 					) : (
 						<div className="flex gap-3">
 							<Button

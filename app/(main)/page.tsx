@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import {
 	Plus,
 	Wallet,
@@ -36,14 +36,14 @@ export default function Dashboard() {
 	const [loading, setLoading] = useState(true)
 	const [selectedTx, setSelectedTx] = useState<any>(null)
 
-	const fetchStats = () => {
+	const fetchStats = useCallback(() => {
 		fetch("/api/stats/dashboard")
 			.then((res) => res.json())
 			.then((d) => {
 				setData(d)
 				setLoading(false)
 			})
-	}
+	}, [])
 
 	const handleDelete = async (id: number) => {
 		if (!confirm("Hapus transaksi ini?")) return
