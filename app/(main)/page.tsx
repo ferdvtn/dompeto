@@ -85,7 +85,7 @@ export default function Dashboard() {
 			</div>
 
 			{/* Balance Card */}
-			<Card className="bg-slate-900/40 backdrop-blur-md border-white/5 text-slate-100 shadow-premium overflow-hidden relative rounded-2xl">
+			<Card className="bg-slate-800/40 backdrop-blur-md border border-white/10 text-slate-100 shadow-premium overflow-hidden relative rounded-2xl">
 				<div className="absolute top-0 right-0 p-4 opacity-5">
 					<Wallet className="w-24 h-24 rotate-12" />
 				</div>
@@ -111,7 +111,7 @@ export default function Dashboard() {
 
 			{/* Daily Metrics */}
 			<div className="grid grid-cols-2 gap-3">
-				<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-2xl">
+				<Card className="bg-slate-800/40 border border-white/10 shadow-premium rounded-2xl">
 					<CardContent className="p-3.5 flex flex-col gap-3">
 						<div className="flex items-center gap-2 text-slate-500 text-[9px] font-bold uppercase tracking-widest">
 							<TrendingDown className="w-2.5 h-2.5 text-red-400" /> Hari Ini
@@ -125,7 +125,7 @@ export default function Dashboard() {
 						</div>
 					</CardContent>
 				</Card>
-				<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-2xl">
+				<Card className="bg-slate-800/40 border border-white/10 shadow-premium rounded-2xl">
 					<CardContent className="p-4 flex flex-col gap-1">
 						<div className="flex items-center gap-2 text-slate-500 text-[9px] font-bold uppercase tracking-widest">
 							Jumlah

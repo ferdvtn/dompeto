@@ -51,7 +51,7 @@ export default function ChartsPage() {
 			{/* Salary Cycle Info */}
 			<Card
 				className={cn(
-					"shadow-2xl rounded-[2rem] overflow-hidden backdrop-blur-md border",
+					"shadow-2xl rounded-[2rem] overflow-hidden backdrop-blur-md border border-white/10",
 					!loading && data?.cycle?.spent > data?.cycle?.budget
 						? "bg-red-600/20 border-red-500/20 text-red-100 shadow-red-950/20"
 						: "bg-emerald-600/20 border-emerald-500/20 text-emerald-100 shadow-emerald-950/20",
@@ -151,7 +151,7 @@ export default function ChartsPage() {
 			</Card>
 
 			{/* Category Pie Chart */}
-			<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-[2rem] backdrop-blur-md">
+			<Card className="bg-slate-800/40 border border-white/10 shadow-premium rounded-[2rem] backdrop-blur-md">
 				<CardHeader>
 					<div className="flex items-center gap-2 text-emerald-400">
 						<TrendingUp className="w-5 h-5" />
@@ -232,7 +232,7 @@ export default function ChartsPage() {
 			</Card>
 
 			{/* Daily Spending Line Chart */}
-			<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-[2rem] backdrop-blur-md">
+			<Card className="bg-slate-800/40 border border-white/10 shadow-premium rounded-[2rem] backdrop-blur-md">
 				<CardHeader>
 					<div className="text-cyan-400 flex items-center gap-2 mb-1">
 						<TrendingUp className="w-5 h-5" />

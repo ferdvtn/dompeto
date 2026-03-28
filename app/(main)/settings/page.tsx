@@ -116,7 +116,7 @@ export default function SettingsPage() {
 		<div className="p-4 pb-5 space-y-5">
 			<h1 className="text-xl font-black italic text-slate-100">Pengaturan</h1>
 			{/* AI Activity */}
-			<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-2xl backdrop-blur-md overflow-hidden">
+			<Card className="bg-slate-800/40 border-white/10 shadow-premium rounded-2xl backdrop-blur-md overflow-hidden border">
 				<CardHeader className="pb-2">
 					<div className="flex items-center gap-2 text-cyan-400">
 						<Sparkles className="w-4 h-4" />
@@ -127,7 +127,7 @@ export default function SettingsPage() {
 				</CardHeader>
 				<CardContent>
 					<div className="grid grid-cols-2 gap-4">
-						<div className="p-3 bg-white/5 rounded-2xl border border-white/5">
+						<div className="p-3 bg-white/5 rounded-2xl border border-white/10">
 							<p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">
 								Prompt Chat
 							</p>
@@ -139,7 +139,7 @@ export default function SettingsPage() {
 								)}
 							</div>
 						</div>
-						<div className="p-3 bg-white/5 rounded-2xl border border-white/5">
+						<div className="p-3 bg-white/5 rounded-2xl border border-white/10">
 							<p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">
 								Input Transaksi
 							</p>
@@ -159,7 +159,7 @@ export default function SettingsPage() {
 			</Card>
 
 			{/* App Settings */}
-			<Card className="bg-slate-900/40 border-white/5 shadow-premium rounded-2xl backdrop-blur-md overflow-hidden">
+			<Card className="bg-slate-800/40 border-white/10 shadow-premium rounded-2xl backdrop-blur-md overflow-hidden border">
 				<CardHeader>
 					<div className="flex items-center gap-2 text-emerald-400">
 						<Calendar className="w-4 h-4" />
@@ -179,7 +179,7 @@ export default function SettingsPage() {
 							<Input
 								type="text"
 								inputMode="numeric"
-								className="bg-slate-950/40 border-white/5 h-11 rounded-xl text-sm font-black italic text-slate-100 shadow-inner"
+								className="bg-slate-900/40 border-white/10 h-11 rounded-xl text-sm font-black italic text-slate-100 shadow-inner"
 								value={formatDisplayNumber(monthlyBudget)}
 								onChange={(e) => setMonthlyBudget(e.target.value.replace(/\D/g, ""))}
 								placeholder="Masukkan total anggaran..."
@@ -198,7 +198,7 @@ export default function SettingsPage() {
 								type="number"
 								min="1"
 								max="31"
-								className="bg-slate-950/40 border-white/5 h-11 rounded-xl text-sm font-black italic text-slate-100 shadow-inner"
+								className="bg-slate-900/40 border-white/10 h-11 rounded-xl text-sm font-black italic text-slate-100 shadow-inner"
 								value={salaryDay}
 								onChange={(e) => setSalaryDay(e.target.value)}
 							/>

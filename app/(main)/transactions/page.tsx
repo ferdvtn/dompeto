@@ -69,7 +69,7 @@ export default function TransactionsPage() {
 				<Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
 				<Input
 					placeholder="Cari transaksi..."
-					className="pl-11 bg-slate-900/40 border-white/5 rounded-xl h-11 text-xs font-bold shadow-sm focus-visible:ring-emerald-500 text-slate-200"
+					className="pl-11 bg-slate-900/40 border border-white/5 rounded-xl h-11 text-xs font-bold shadow-sm focus-visible:ring-emerald-500 text-slate-200"
 					value={searchQuery}
 					onChange={(e) => setSearchQuery(e.target.value)}
 				/>
@@ -82,7 +82,7 @@ export default function TransactionsPage() {
 						<Skeleton key={i} className="h-16 w-full rounded-2xl bg-slate-800/30" />
 					))
 				) : filtered.length === 0 ? (
-					<div className="bg-slate-950/20 border border-dashed border-white/5 rounded-2xl p-10 text-center text-slate-600">
+					<div className="bg-slate-900/20 border border-dashed border-white/10 rounded-2xl p-10 text-center text-slate-600">
 						<History className="w-10 h-10 mx-auto mb-3 opacity-20" />
 						<p className="text-[10px] font-black uppercase tracking-widest italic">
 							Data tidak ditemukan

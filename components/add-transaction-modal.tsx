@@ -114,168 +114,175 @@ export function AddTransactionModal({
 			}}
 		>
 			<DrawerTrigger asChild>{children}</DrawerTrigger>
-			<DrawerContent className="rounded-t-[2rem] bg-[#070b1a] border-t border-white/5 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,1.5rem))] sm:max-w-md mx-auto shadow-2xl overflow-hidden outline-none">
-				<DrawerHeader className="p-0 text-left">
-					<div className="mx-auto w-10 h-1 bg-slate-800 rounded-full mb-6" />
-					<DrawerTitle className="text-lg font-black italic flex items-center gap-3 text-slate-100">
-						<Sparkles
-							className={cn("w-5 h-5 text-emerald-500", loading && "animate-pulse")}
-						/>
-						AI Dompeto
-					</DrawerTitle>
-				</DrawerHeader>
+			<DrawerContent className="rounded-t-[2rem] bg-[#0f172a] border-t border-white/5 outline-none max-h-[96dvh] flex flex-col shadow-2xl overflow-hidden">
+				<div className="mx-auto w-10 h-1 bg-slate-800 rounded-full my-4 shrink-0" />
 
-				<div className="space-y-6 py-4 font-sans">
-					{!confirmationData ? (
-						<div className="space-y-6">
-							<div className="space-y-4">
-								<div className="space-y-2">
-									<label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
-										Ketik Transaksi
-									</label>
-									<div className="relative group">
-										<Input
-											ref={inputRef}
-											placeholder="Contoh: kopi 20k..."
-											className="bg-slate-900/40 border-white/5 h-11 rounded-xl text-sm font-bold italic shadow-inner focus-visible:ring-emerald-500 text-slate-100 placeholder:text-slate-700 px-4"
-											value={rawInput}
-											onChange={(e) => setRawInput(e.target.value)}
-											onKeyDown={(e) => e.key === "Enter" && handleParse()}
-										/>
+				<div className="flex-1 overflow-y-auto px-6 pb-2 custom-scrollbar">
+					<DrawerHeader className="p-0 text-left mb-4">
+						<DrawerTitle className="text-lg font-black italic flex items-center gap-3 text-slate-100">
+							<Sparkles
+								className={cn("w-5 h-5 text-emerald-500", loading && "animate-pulse")}
+							/>
+							AI Dompeto
+						</DrawerTitle>
+					</DrawerHeader>
+
+					<div className="space-y-5 py-2 font-sans">
+						{!confirmationData ? (
+							<div className="space-y-5">
+								<div className="space-y-4">
+									<div className="space-y-2">
+										<label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+											Ketik Transaksi
+										</label>
+										<div className="relative group">
+											<Input
+												ref={inputRef}
+												placeholder="Contoh: kopi 20k..."
+												className="bg-slate-900/40 border-white/5 h-11 rounded-xl text-sm font-bold italic shadow-inner focus-visible:ring-emerald-500 text-slate-100 placeholder:text-slate-700 px-4"
+												value={rawInput}
+												onChange={(e) => setRawInput(e.target.value)}
+												onKeyDown={(e) => e.key === "Enter" && handleParse()}
+											/>
+										</div>
 									</div>
-								</div>
 
-								<div className="space-y-2">
-									<p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
-										Coba Ketik:
-									</p>
-									<div className="flex flex-wrap gap-2">
-										{SUGGESTIONS.map((s) => (
-											<button
-												key={s}
-												onClick={() => setRawInput(s)}
-												className="px-3 py-1.5 bg-slate-900 border border-white/5 rounded-full text-[10px] font-bold text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all active:scale-95"
-											>
-												{s}
-											</button>
-										))}
+									<div className="space-y-2">
+										<p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+											Coba Ketik:
+										</p>
+										<div className="flex flex-wrap gap-2">
+											{SUGGESTIONS.map((s) => (
+												<button
+													key={s}
+													onClick={() => setRawInput(s)}
+													className="px-3 py-1.5 bg-slate-900 border border-white/5 rounded-full text-[10px] font-bold text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all active:scale-95"
+												>
+													{s}
+												</button>
+											))}
+										</div>
 									</div>
 								</div>
 							</div>
+						) : (
+							<div className="space-y-4">
+								<div className="grid grid-cols-2 gap-3 pt-1">
+									<div className="p-3 bg-slate-800/40 rounded-2xl border border-white/10 space-y-1 shadow-inner">
+										<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+											<Receipt className="w-2.5 h-2.5" /> Nominal
+										</div>
+										<div
+											className={cn(
+												"text-sm font-black italic",
+												confirmationData.type === "income"
+													? "text-emerald-400"
+													: "text-red-400",
+											)}
+										>
+											{confirmationData.type === "income" ? "+" : "-"}{" "}
+											{formatIDR(confirmationData.amount)}
+										</div>
+									</div>
+									<div className="p-3 bg-slate-800/40 rounded-2xl border border-white/10 space-y-1 shadow-inner">
+										<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+											<PieChart className="w-2.5 h-2.5" /> Kategori
+										</div>
+										<div className="text-sm font-black italic text-slate-100 tracking-tighter">
+											{confirmationData.category}
+										</div>
+									</div>
+								</div>
 
+								<div className="space-y-1.5 border-t border-white/5 pt-4">
+									<div className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+										<Info className="w-2.5 h-2.5" /> Keterangan
+									</div>
+									<div className="text-[11px] text-slate-300 font-bold italic bg-slate-800/40 p-2.5 rounded-xl border border-white/10 shadow-inner leading-relaxed">
+										"{confirmationData.description || rawInput}"
+									</div>
+								</div>
+
+								{/* Include in Budget Toggle */}
+								<div className="flex items-center justify-between w-full p-3 bg-slate-800/60 rounded-2xl border border-white/10 shadow-inner group transition-all">
+									<div className="flex items-center gap-3">
+										<div
+											className={cn(
+												"p-2 rounded-xl transition-all duration-300",
+												includeInBudget
+													? "bg-emerald-500/10 text-emerald-400"
+													: "bg-slate-800 text-slate-600",
+											)}
+										>
+											<Calendar className="w-3.5 h-3.5" />
+										</div>
+										<div className="text-left">
+											<p className="text-[10px] font-black italic text-slate-100 uppercase tracking-tight">
+												Libatkan Anggaran
+											</p>
+											<p className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">
+												Pengaruhi sisa kuota gaji
+											</p>
+										</div>
+									</div>
+									<button
+										type="button"
+										onClick={() => setIncludeInBudget(!includeInBudget)}
+										className={cn(
+											"w-10 h-5 rounded-full relative transition-all duration-300 active:scale-95 shadow-lg",
+											includeInBudget
+												? "bg-emerald-600 shadow-emerald-500/10"
+												: "bg-slate-800",
+										)}
+									>
+										<div
+											className={cn(
+												"absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
+												includeInBudget ? "left-6" : "left-1",
+											)}
+										/>
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+
+				<div className="p-6 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,1.5rem))] border-t border-white/5 bg-[#070b1a]/80 backdrop-blur-md shrink-0">
+					{!confirmationData ? (
+						<Button
+							className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
+							onClick={() => handleParse()}
+							disabled={loading || !rawInput.trim()}
+						>
+							{loading ? (
+								<Loader2 className="w-4 h-4 animate-spin mr-2" />
+							) : (
+								<Plus className="w-4 h-4 mr-2" />
+							)}
+							PROSES AI
+						</Button>
+					) : (
+						<div className="flex gap-3">
 							<Button
-								className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
-								onClick={() => handleParse()}
-								disabled={loading || !rawInput.trim()}
+								variant="outline"
+								className="flex-1 h-12 rounded-xl border-white/10 bg-slate-950/20 text-slate-500 font-black italic text-[9px] uppercase tracking-widest"
+								onClick={() => setConfirmationData(null)}
+							>
+								RESET
+							</Button>
+							<Button
+								className="flex-[2] h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 gap-3 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
+								onClick={handleConfirm}
+								disabled={loading}
 							>
 								{loading ? (
-									<Loader2 className="w-4 h-4 animate-spin mr-2" />
+									<Loader2 className="w-4 h-4 animate-spin" />
 								) : (
-									<Plus className="w-4 h-4 mr-2" />
+									<Check className="w-4 h-4" />
 								)}
-								PROSES AI
+								KONFIRMASI
 							</Button>
-						</div>
-					) : (
-						<div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-							<div className="grid grid-cols-2 gap-3 pt-1">
-								<div className="p-3 bg-slate-900/40 rounded-2xl border border-white/5 space-y-1 shadow-inner">
-									<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
-										<Receipt className="w-2.5 h-2.5" /> Nominal
-									</div>
-									<div
-										className={cn(
-											"text-sm font-black italic",
-											confirmationData.type === "income"
-												? "text-emerald-400"
-												: "text-red-400",
-										)}
-									>
-										{confirmationData.type === "income" ? "+" : "-"}{" "}
-										{formatIDR(confirmationData.amount)}
-									</div>
-								</div>
-								<div className="p-3 bg-slate-900/40 rounded-2xl border border-white/5 space-y-1 shadow-inner">
-									<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
-										<Calendar className="w-2.5 h-2.5" /> Kategori
-									</div>
-									<div className="text-sm font-black italic text-slate-100 tracking-tighter">
-										{confirmationData.category}
-									</div>
-								</div>
-							</div>
-
-							<div className="space-y-1.5 border-t border-white/5 pt-4">
-								<div className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
-									<Info className="w-2.5 h-2.5" /> Keterangan
-								</div>
-								<div className="text-[11px] text-slate-300 font-bold italic bg-slate-900/40 p-2.5 rounded-xl border border-white/5 shadow-inner leading-relaxed">
-									"{confirmationData.description || rawInput}"
-								</div>
-							</div>
-
-							{/* Include in Budget Toggle */}
-							<div className="flex items-center justify-between w-full p-3 bg-slate-900/60 rounded-2xl border border-white/5 shadow-inner group transition-all">
-								<div className="flex items-center gap-3">
-									<div
-										className={cn(
-											"p-2 rounded-xl transition-all duration-300",
-											includeInBudget
-												? "bg-emerald-500/10 text-emerald-400"
-												: "bg-slate-800 text-slate-600",
-										)}
-									>
-										<PieChart className="w-3.5 h-3.5" />
-									</div>
-									<div className="text-left">
-										<p className="text-[10px] font-black italic text-slate-100 uppercase tracking-tight">
-											Libatkan Anggaran
-										</p>
-										<p className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">
-											Pengaruhi sisa kuota gaji
-										</p>
-									</div>
-								</div>
-								<button
-									type="button"
-									onClick={() => setIncludeInBudget(!includeInBudget)}
-									className={cn(
-										"w-10 h-5 rounded-full relative transition-all duration-300 active:scale-95 shadow-lg",
-										includeInBudget
-											? "bg-emerald-600 shadow-emerald-500/10"
-											: "bg-slate-800",
-									)}
-								>
-									<div
-										className={cn(
-											"absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
-											includeInBudget ? "left-6" : "left-1",
-										)}
-									/>
-								</button>
-							</div>
-
-							<div className="flex gap-3 pt-2">
-								<Button
-									variant="outline"
-									className="flex-1 h-11 rounded-xl border-white/10 bg-slate-950/20 text-slate-500 font-black italic text-[9px] uppercase tracking-widest"
-									onClick={() => setConfirmationData(null)}
-								>
-									RESET
-								</Button>
-								<Button
-									className="flex-[2] h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black italic text-xs shadow-xl shadow-emerald-950/20 gap-3 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
-									onClick={handleConfirm}
-									disabled={loading}
-								>
-									{loading ? (
-										<Loader2 className="w-4 h-4 animate-spin" />
-									) : (
-										<Check className="w-4 h-4" />
-									)}
-									KONFIRMASI
-								</Button>
-							</div>
 						</div>
 					)}
 				</div>

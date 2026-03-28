@@ -2,13 +2,13 @@
 
 @layer base {
 	:root {
-		--background: 222.2 47.4% 5.5%; /* Deep Slate, slightly lighter */
+		--background: 222.2 47.4% 11.2%; /* Slate 900 boundary */
 		--foreground: 210 40% 98%;
 
-		--card: 222.2 47.4% 7.5%;
+		--card: 222.2 47.4% 14.2%; /* Slate 850ish */
 		--card-foreground: 210 40% 98%;
 
-		--popover: 222.2 47.4% 7.5%;
+		--popover: 222.2 47.4% 14.2%;
 		--popover-foreground: 210 40% 98%;
 
 		--primary: 210 40% 98%;
@@ -36,15 +36,10 @@
 
 @layer base {
 	* {
-		border-color: rgba(
-			255,
-			255,
-			255,
-			0.05
-		); /* Extremely soft border for dark mode */
+		border-color: rgba(255, 255, 255, 0.05); /* Soft border */
 	}
 	body {
-		background-color: #070b1a; /* Adjusted Slate, slightly lighter */
+		background-color: #0f172a; /* Slate 900 */
 		color: #f1f5f9;
 		-webkit-font-smoothing: antialiased;
 	}

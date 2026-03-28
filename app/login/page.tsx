@@ -38,7 +38,7 @@ export default function LoginPage() {
 	}
 
 	return (
-		<div className="w-full flex-1 flex items-center justify-center p-6 bg-[#070b1a] relative overflow-hidden">
+		<div className="w-full flex-1 flex items-center justify-center p-6 bg-[#0f172a] relative overflow-hidden">
 			{/* Luxury Background Elements */}
 			<div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-3xl opacity-30" />
 			<div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-3xl opacity-30" />

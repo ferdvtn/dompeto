@@ -20,7 +20,7 @@ export function TransactionItem({ tx, onClick }: TransactionItemProps) {
 
 	return (
 		<div
-			className="group flex items-center justify-between p-3 bg-slate-900/40 border border-white/5 rounded-2xl shadow-premium active:scale-[0.98] transition-all relative overflow-hidden cursor-pointer"
+			className="group flex items-center justify-between p-3 bg-slate-800/40 border border-white/10 rounded-2xl shadow-premium active:scale-[0.98] transition-all relative overflow-hidden cursor-pointer"
 			onClick={onClick}
 		>
 			<div className="flex items-center gap-3">
