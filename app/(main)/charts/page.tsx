@@ -125,12 +125,14 @@ export default function ChartsPage() {
 						<div className="flex justify-between text-[11px] font-black italic pt-1">
 							<div className="flex flex-col gap-1">
 								<span className="text-[8px] opacity-40 uppercase not-italic">
-									Terpakai
+									Sisa anggaran
 								</span>
 								{loading ? (
 									<Skeleton className="h-4 w-20 bg-white/10" />
 								) : (
-									<span>{formatIDR(data?.cycle?.spent || 0)}</span>
+									<span>
+										{formatIDR((data?.cycle?.budget || 0) - (data?.cycle?.spent || 0))}
+									</span>
 								)}
 							</div>
 							<div className="flex flex-col text-right gap-1">

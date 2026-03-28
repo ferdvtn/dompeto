@@ -27,8 +27,18 @@ export async function PATCH(
 ) {
 	try {
 		const { id } = await params
-		const { description, amount, type, category_id, date, include_in_budget } =
-			await req.json()
+		const body = await req.json()
+		const { description, amount, type, category_id, date } = body
+		let { include_in_budget } = body
+
+		// If include_in_budget is not provided, fetch the existing one
+		if (include_in_budget === undefined) {
+			const existing = await db.execute({
+				sql: "SELECT include_in_budget FROM transactions WHERE id = ?",
+				args: [id],
+			})
+			include_in_budget = existing.rows[0]?.include_in_budget
+		}
 
 		await db.execute({
 			sql: `

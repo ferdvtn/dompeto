@@ -114,7 +114,7 @@ export function AddTransactionModal({
 			}}
 		>
 			<DrawerTrigger asChild>{children}</DrawerTrigger>
-			<DrawerContent className="rounded-t-[2rem] bg-[#020617] border-t border-white/5 p-6 sm:max-w-md mx-auto shadow-2xl overflow-hidden outline-none">
+			<DrawerContent className="rounded-t-[2rem] bg-[#070b1a] border-t border-white/5 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,1.5rem))] sm:max-w-md mx-auto shadow-2xl overflow-hidden outline-none">
 				<DrawerHeader className="p-0 text-left">
 					<div className="mx-auto w-10 h-1 bg-slate-800 rounded-full mb-6" />
 					<DrawerTitle className="text-lg font-black italic flex items-center gap-3 text-slate-100">

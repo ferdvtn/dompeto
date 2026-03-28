@@ -98,7 +98,7 @@ export default function ChatPage() {
 	}
 
 	return (
-		<div className="flex flex-col h-[calc(100vh-5rem)] bg-[#020617] text-slate-100 relative">
+		<div className="flex flex-col h-[calc(100vh-5rem)] bg-[#070b1a] text-slate-100 relative">
 			{/* Header */}
 			<div className="p-4 border-b border-white/5 flex items-center gap-4 bg-slate-900/40 backdrop-blur-md sticky top-0 z-20">
 				<button

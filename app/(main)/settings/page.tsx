@@ -8,6 +8,8 @@ import {
 	Sparkles,
 	AlertCircle,
 	Loader2,
+	Eye,
+	EyeOff,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,6 +35,7 @@ export default function SettingsPage() {
 	const [isResetDialogOpen, setIsResetDialogOpen] = useState(false)
 	const [resetPassword, setResetPassword] = useState("")
 	const [isResetting, setIsResetting] = useState(false)
+	const [showResetPassword, setShowResetPassword] = useState(false)
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -245,13 +248,26 @@ export default function SettingsPage() {
 					</DialogHeader>
 
 					<div className="py-4 px-2">
-						<Input
-							type="password"
-							placeholder="Password Anda"
-							className="bg-slate-900/50 border-white/5 h-12 rounded-2xl text-center font-black italic text-slate-100 shadow-inner focus:ring-red-500/20 focus:border-red-500/40"
-							value={resetPassword}
-							onChange={(e) => setResetPassword(e.target.value)}
-						/>
+						<div className="relative group">
+							<Input
+								type={showResetPassword ? "text" : "password"}
+								placeholder="Password Anda"
+								className="bg-slate-900/50 border-white/5 h-12 rounded-2xl text-center font-black italic text-slate-100 shadow-inner focus:ring-red-500/20 focus:border-red-500/40 pr-12"
+								value={resetPassword}
+								onChange={(e) => setResetPassword(e.target.value)}
+							/>
+							<button
+								type="button"
+								onClick={() => setShowResetPassword(!showResetPassword)}
+								className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-red-400 transition-colors"
+							>
+								{showResetPassword ? (
+									<EyeOff className="w-4 h-4" />
+								) : (
+									<Eye className="w-4 h-4" />
+								)}
+							</button>
+						</div>
 					</div>
 
 					<DialogFooter className="flex flex-col gap-2 p-2">

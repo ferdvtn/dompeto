@@ -38,9 +38,9 @@ export default function RootLayout({
 	return (
 		<html lang="id" className={cn("font-sans overflow-x-hidden", geist.variable)}>
 			<body
-				className={`${inter.className} bg-[#02030a] text-slate-100 antialiased flex justify-center overflow-x-hidden`}
+				className={`${inter.className} bg-[#04060d] text-slate-100 antialiased flex justify-center overflow-x-hidden`}
 			>
-				<div className="w-full max-w-md bg-[#020617] min-h-svh shadow-2xl relative border-x border-white/5 flex flex-col">
+				<div className="w-full max-w-md bg-[#070b1a] min-h-svh shadow-2xl relative border-x border-white/5 flex flex-col">
 					{children}
 					<Toaster richColors position="top-center" />
 				</div>

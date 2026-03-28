@@ -111,6 +111,7 @@ export function TransactionDetailDrawer({
 					type: localTx.type,
 					category_id: localTx.category_id,
 					date: dbDate,
+					include_in_budget: localTx.include_in_budget,
 				}),
 			})
 
@@ -143,7 +144,7 @@ export function TransactionDetailDrawer({
 
 	return (
 		<Drawer open={!!transaction} onOpenChange={(o) => !o && onClose()}>
-			<DrawerContent className="rounded-t-[2rem] bg-[#020617] border-t border-white/5 p-6 pb-12 outline-none">
+			<DrawerContent className="rounded-t-[2rem] bg-[#070b1a] border-t border-white/5 p-6 pb-12 outline-none">
 				<div className="mx-auto w-10 h-1 bg-slate-800 rounded-full mb-6" />
 				{localTx && (
 					<div className="space-y-8">
