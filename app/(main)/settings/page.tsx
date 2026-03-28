@@ -107,6 +107,11 @@ export default function SettingsPage() {
 		router.push("/login")
 	}
 
+	const formatDisplayNumber = (num: string) => {
+		if (!num) return ""
+		return new Intl.NumberFormat("id-ID").format(Number(num))
+	}
+
 	return (
 		<div className="p-4 pb-5 space-y-5">
 			<h1 className="text-xl font-black italic text-slate-100">Pengaturan</h1>
@@ -172,10 +177,11 @@ export default function SettingsPage() {
 							<Skeleton className="h-11 w-full rounded-xl bg-slate-800/40" />
 						) : (
 							<Input
-								type="number"
+								type="text"
+								inputMode="numeric"
 								className="bg-slate-950/40 border-white/5 h-11 rounded-xl text-sm font-black italic text-slate-100 shadow-inner"
-								value={monthlyBudget}
-								onChange={(e) => setMonthlyBudget(e.target.value)}
+								value={formatDisplayNumber(monthlyBudget)}
+								onChange={(e) => setMonthlyBudget(e.target.value.replace(/\D/g, ""))}
 								placeholder="Masukkan total anggaran..."
 							/>
 						)}
