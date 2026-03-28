@@ -36,12 +36,34 @@ export function TransactionDetailDrawer({
 }: TransactionDetailDrawerProps) {
 	const [isEditingDate, setIsEditingDate] = useState(false)
 	const [editedDate, setEditedDate] = useState("")
+	const [isEditingAmount, setIsEditingAmount] = useState(false)
+	const [editedAmount, setEditedAmount] = useState("")
+	const [isEditingCategory, setIsEditingCategory] = useState(false)
+	const [editedCategoryId, setEditedCategoryId] = useState<number | string>("")
+	const [categories, setCategories] = useState<any[]>([])
 	const [isUpdating, setIsUpdating] = useState(false)
 	const [localTx, setLocalTx] = useState<any>(null)
 
 	useEffect(() => {
+		const fetchCategories = async () => {
+			try {
+				const res = await fetch("/api/categories")
+				if (res.ok) {
+					const data = await res.json()
+					setCategories(data)
+				}
+			} catch (err) {
+				console.error("Gagal mengambil kategori:", err)
+			}
+		}
+		fetchCategories()
+	}, [])
+
+	useEffect(() => {
 		if (transaction) {
 			setLocalTx(transaction)
+			setEditedAmount(String(transaction.amount))
+			setEditedCategoryId(transaction.category_id)
 			// Format to YYYY-MM-DDTHH:MM for input type="datetime-local"
 			const dateVal = transaction.date
 			const date = new Date(dateVal)
@@ -55,7 +77,89 @@ export function TransactionDetailDrawer({
 			setLocalTx(null)
 		}
 		setIsEditingDate(false)
+		setIsEditingAmount(false)
+		setIsEditingCategory(false)
 	}, [transaction])
+
+	const handleUpdateCategory = async (newCategoryId: number) => {
+		if (!localTx) return
+		setIsUpdating(true)
+		try {
+			const res = await fetch(`/api/transactions/${localTx.id}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					description: localTx.description,
+					amount: localTx.amount,
+					type: localTx.type,
+					category_id: newCategoryId,
+					date: localTx.date,
+					include_in_budget: localTx.include_in_budget,
+				}),
+			})
+
+			if (!res.ok) throw new Error("Gagal memperbarui kategori")
+
+			toast.success("Kategori diperbarui")
+
+			// Update UI immediately inside the drawer
+			const newCategory = categories.find((c) => c.id === newCategoryId)
+			setLocalTx((prev: any) => ({
+				...prev,
+				category_id: newCategoryId,
+				category_name: newCategory?.name || prev.category_name,
+			}))
+
+			setIsEditingCategory(false)
+			if (onUpdate) onUpdate()
+		} catch (error: any) {
+			toast.error(error.message)
+		} finally {
+			setIsUpdating(false)
+		}
+	}
+
+	const handleUpdateAmount = async () => {
+		if (!localTx) return
+		const amountValue = Number(editedAmount)
+		if (isNaN(amountValue) || amountValue < 0) {
+			toast.error("Nominal tidak valid")
+			return
+		}
+
+		setIsUpdating(true)
+		try {
+			const res = await fetch(`/api/transactions/${localTx.id}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					description: localTx.description,
+					amount: amountValue,
+					type: localTx.type,
+					category_id: localTx.category_id,
+					date: localTx.date,
+					include_in_budget: localTx.include_in_budget,
+				}),
+			})
+
+			if (!res.ok) throw new Error("Gagal memperbarui nominal")
+
+			toast.success("Nominal diperbarui")
+
+			// Update UI immediately inside the drawer
+			setLocalTx((prev: any) => ({
+				...prev,
+				amount: amountValue,
+			}))
+
+			setIsEditingAmount(false)
+			if (onUpdate) onUpdate()
+		} catch (error: any) {
+			toast.error(error.message)
+		} finally {
+			setIsUpdating(false)
+		}
+	}
 
 	const handleToggleBudget = async () => {
 		if (!localTx) return
@@ -213,9 +317,45 @@ export function TransactionDetailDrawer({
 									<DrawerTitle className="text-sm font-black italic text-slate-100 break-words leading-tight line-clamp-2">
 										{localTx.description || localTx.raw_input}
 									</DrawerTitle>
-									<div className="text-md font-black italic mt-0.5 text-slate-200">
-										{localTx.type === "expense" ? "-" : "+"} {formatIDR(localTx.amount)}
-									</div>
+									{isEditingAmount ? (
+										<div className="flex items-center gap-2 bg-slate-900/80 p-2 rounded-xl border border-white/10 shadow-lg animate-in fade-in zoom-in duration-200 mt-2">
+											<span className="text-xs font-black italic text-slate-500">Rp</span>
+											<input
+												type="number"
+												className="bg-transparent text-lg font-black italic text-slate-100 outline-none border-none w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+												value={editedAmount}
+												onChange={(e) => setEditedAmount(e.target.value)}
+												autoFocus
+												onKeyDown={(e) => e.key === "Enter" && handleUpdateAmount()}
+											/>
+											<div className="flex items-center gap-1 border-l border-white/10 pl-2">
+												<button
+													onClick={handleUpdateAmount}
+													disabled={isUpdating}
+													className="p-1.5 hover:bg-emerald-500/20 rounded-md text-emerald-500 transition-colors disabled:opacity-50"
+												>
+													{isUpdating ? (
+														<Loader2 className="w-4 h-4 animate-spin" />
+													) : (
+														<Check className="w-4 h-4" />
+													)}
+												</button>
+												<button
+													onClick={() => setIsEditingAmount(false)}
+													className="p-1.5 hover:bg-red-500/20 rounded-md text-red-400 transition-colors"
+												>
+													<X className="w-4 h-4" />
+												</button>
+											</div>
+										</div>
+									) : (
+										<button
+											onClick={() => setIsEditingAmount(true)}
+											className="text-md font-black italic mt-0.5 text-slate-200 hover:text-emerald-400 transition-colors"
+										>
+											{localTx.type === "expense" ? "-" : "+"} {formatIDR(localTx.amount)}
+										</button>
+									)}
 								</DrawerHeader>
 
 								<div className="grid grid-cols-1 gap-3">
@@ -229,13 +369,54 @@ export function TransactionDetailDrawer({
 									</div>
 
 									<div className="flex gap-3">
-										<div className="flex-1 p-3 bg-slate-900/40 border border-white/5 rounded-2xl space-y-1 shadow-sm">
-											<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-												<Tag className="w-3 h-3" /> Kategori
+										<div
+											className={cn(
+												"flex-1 p-3 bg-slate-900/40 border border-white/5 rounded-2xl space-y-1 shadow-sm transition-all",
+												isEditingCategory && "ring-1 ring-emerald-500/30 bg-slate-900/60",
+											)}
+										>
+											<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center justify-between">
+												<div className="flex items-center gap-2">
+													<Tag className="w-3 h-3" /> Kategori
+												</div>
+												{!isEditingCategory && (
+													<button
+														onClick={() => setIsEditingCategory(true)}
+														className="text-[7px] text-emerald-500 hover:underline"
+													>
+														UBAH
+													</button>
+												)}
 											</div>
-											<div className="text-[10px] font-black italic text-slate-200">
-												{localTx.category_name}
-											</div>
+											{isEditingCategory ? (
+												<div className="flex items-center gap-2 pt-1">
+													<select
+														className="flex-1 bg-slate-800 text-[10px] font-black uppercase text-slate-100 outline-none border-none rounded px-1 py-0.5 appearance-none"
+														value={localTx.category_id}
+														onChange={(e) => handleUpdateCategory(Number(e.target.value))}
+														autoFocus
+													>
+														{categories.map((c) => (
+															<option key={c.id} value={c.id}>
+																{c.name}
+															</option>
+														))}
+													</select>
+													<button
+														onClick={() => setIsEditingCategory(false)}
+														className="text-slate-500 hover:text-red-400"
+													>
+														<X className="w-3 h-3" />
+													</button>
+												</div>
+											) : (
+												<button
+													onClick={() => setIsEditingCategory(true)}
+													className="text-[10px] font-black italic text-slate-200 text-left hover:text-emerald-400 transition-colors w-full"
+												>
+													{localTx.category_name}
+												</button>
+											)}
 										</div>
 										<div className="flex-1 p-3 bg-slate-900/40 border border-white/5 rounded-2xl space-y-1 shadow-sm overflow-hidden">
 											<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">

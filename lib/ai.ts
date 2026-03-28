@@ -25,7 +25,7 @@ FORMAT OUTPUT (hanya JSON):
   "amount": <integer dalam Rupiah>,
   "type": <"expense" atau "income">,
   "category": <salah satu dari kategori di bawah>,
-  "description": <string singkat, max 50 karakter>,
+  "description": <string singkat, GUNAKAN Capital Case untuk kata penting, tapi "dan", "di", "ke" harus huruf kecil. Akronim seperti "UHT", "PLN", "PDAM", "Rp", "IDR" harus HURUF KAPITAL SEMUA. (Contoh: "Kopi dan Susu UHT", "Tagihan PLN", "Gaji dan Bonus")>,
   "notes": <konteks tambahan jika ada, boleh kosong>
 }
 
@@ -46,7 +46,7 @@ ATURAN PARSING:
 - "kopi" -> Makan & Minuman.
 - "10k", "10rb" = 10000.
 - "1jt" = 1000000.
-- "description": JANGAN biarkan kosong. Jika kata tidak bermakna (misal: "asdasd"), gunakan potongan input asli sebagai deskripsi.
+- "description": JANGAN biarkan kosong. GUNAKAN aturan penulisan Indonesia: Huruf Kapital di awal kata, KECUALI kata hubung "dan", "di", "ke" (kecuali di awal kalimat). Akronim (UHT, PLN, PDAM, Rp, IDR) harus HURUF KAPITAL SEMUA. Jika kata tidak bermakna (misal: "asdasd"), gunakan potongan input asli sebagai deskripsi.
 - Pastikan angka murni tanpa titik/koma.
 `.trim()
 
@@ -221,13 +221,13 @@ PENTING:
 
 ATURAN UMUM:
 - Jika harga tidak terbaca → amount: 0.
-- description max 60 karakter, gunakan nama yang mudah dimengerti (bukan kode singkat).
+- description max 40 karakter. Gunakan ringkasan jenis barang dengan aturan penulisan Indonesia: Huruf Kapital di awal kata, KECUALI "dan", "di", "ke". Akronim (UHT, PLN, PDAM, Rp, IDR) harus HURUF KAPITAL SEMUA (Contoh: "Susu UHT", "Gula dan Kopi", "Token PLN").
 
 FORMAT OUTPUT (JSON):
 {
   "date": "YYYY-MM-DD",
   "items": [
-    { "name": "<Nama-nama Barang di kategori tersebut, pisahkan dengan koma>", "amount": 15000, "category": "Makan & Minuman" },
+    { "name": "<Ringkasan Jenis Barang: Susu UHT, Kaldu Ayam, Mie Instan>", "amount": 15000, "category": "Makan & Minuman" },
     ...
   ]
 }
