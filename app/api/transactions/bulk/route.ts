@@ -29,8 +29,11 @@ export async function POST(request: Request) {
 
 			await db.execute({
 				sql: `
-          INSERT INTO transactions (description, amount, type, category_id, date, raw_input, include_in_budget)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO transactions (
+            description, amount, type, category_id, date, raw_input, notes, ai_confirmed, include_in_budget,
+            created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, datetime('now', '+7 hours'), datetime('now', '+7 hours'))
         `,
 				args: [
 					item.name,
@@ -39,7 +42,8 @@ export async function POST(request: Request) {
 					categoryId,
 					transactionDate,
 					`Scan: ${item.name}`,
-					1, // include_in_budget true by default
+					"Hasil scan struk",
+					Number(item.include_in_budget ?? 1),
 				],
 			})
 		}

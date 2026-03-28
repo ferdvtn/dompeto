@@ -23,18 +23,18 @@ export function TransactionItem({ tx, onClick }: TransactionItemProps) {
 			className="group flex items-center justify-between p-3 bg-slate-800/40 border border-white/10 rounded-2xl shadow-premium active:scale-[0.98] transition-all relative overflow-hidden cursor-pointer"
 			onClick={onClick}
 		>
-			<div className="flex items-center gap-3">
-				<div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shadow-inner border border-white/5">
+			<div className="flex items-center gap-3 min-w-0 flex-1">
+				<div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shadow-inner border border-white/5 shrink-0">
 					<CategoryIcon
 						name={tx.category_icon || "Wallet"}
 						className="w-5 h-5 text-emerald-500/80"
 					/>
 				</div>
-				<div>
+				<div className="min-w-0 flex-1">
 					<div className="text-xs font-bold text-slate-100 italic line-clamp-1">
 						{tx.description || tx.raw_input}
 					</div>
-					<div className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">
+					<div className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter line-clamp-1">
 						{tx.category_name} •{" "}
 						{new Date(tx.date).toLocaleDateString("id", {
 							day: "2-digit",
@@ -43,7 +43,7 @@ export function TransactionItem({ tx, onClick }: TransactionItemProps) {
 					</div>
 				</div>
 			</div>
-			<div className="flex items-center gap-4">
+			<div className="flex items-center gap-3 shrink-0 ml-4">
 				{tx.include_in_budget === 0 && (
 					<div className="flex items-center gap-1 px-2 py-0.5 bg-slate-800/50 rounded-lg border border-white/5 shadow-inner">
 						<PieChart className="w-2.5 h-2.5 text-slate-600" />

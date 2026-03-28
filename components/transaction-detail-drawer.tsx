@@ -144,166 +144,170 @@ export function TransactionDetailDrawer({
 
 	return (
 		<Drawer open={!!transaction} onOpenChange={(o) => !o && onClose()}>
-			<DrawerContent className="rounded-t-[2rem] bg-[#0f172a] border-t border-white/5 p-6 pb-12 outline-none">
-				<div className="mx-auto w-10 h-1 bg-slate-800 rounded-full mb-6" />
+			<DrawerContent className="rounded-t-[2rem] bg-[#0f172a] border-t border-white/5 outline-none max-h-[96dvh] flex flex-col shadow-2xl overflow-hidden">
+				<div className="mx-auto w-10 h-1 bg-slate-800 rounded-full my-4 shrink-0" />
 				{localTx && (
-					<div className="space-y-8">
-						<DrawerHeader className="p-0 text-left">
-							<div className="flex justify-between items-center mb-4">
-								<Badge
-									className={cn(
-										"px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border-none",
-										localTx.type === "income"
-											? "bg-emerald-500/10 text-emerald-400"
-											: "bg-red-500/10 text-red-400",
-									)}
-								>
-									{localTx.type === "income" ? "Pemasukan" : "Pengeluaran"}
-								</Badge>
+					<>
+						<div className="flex-1 overflow-y-auto px-6 pb-2 custom-scrollbar">
+							<div className="space-y-6 py-2">
+								<DrawerHeader className="p-0 text-left">
+									<div className="flex justify-between items-center mb-3">
+										<Badge
+											className={cn(
+												"px-3 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest border-none",
+												localTx.type === "income"
+													? "bg-emerald-500/10 text-emerald-400"
+													: "bg-red-500/10 text-red-400",
+											)}
+										>
+											{localTx.type === "income" ? "Pemasukan" : "Pengeluaran"}
+										</Badge>
 
-								{isEditingDate ? (
-									<div className="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-white/10 shadow-lg animate-in fade-in zoom-in duration-200">
-										<input
-											type="datetime-local"
-											className="bg-transparent text-[10px] font-black uppercase text-slate-100 outline-none border-none [color-scheme:dark]"
-											value={editedDate}
-											onChange={(e) => setEditedDate(e.target.value)}
-											autoFocus
-										/>
-										<div className="flex items-center gap-1 border-l border-white/10 pl-2">
+										{isEditingDate ? (
+											<div className="flex items-center gap-2 bg-slate-900/80 p-1 rounded-xl border border-white/10 shadow-lg animate-in fade-in zoom-in duration-200">
+												<input
+													type="datetime-local"
+													className="bg-transparent text-[7px] font-black uppercase text-slate-100 outline-none border-none [color-scheme:dark]"
+													value={editedDate}
+													onChange={(e) => setEditedDate(e.target.value)}
+													autoFocus
+												/>
+												<div className="flex items-center gap-1 border-l border-white/10 pl-2">
+													<button
+														onClick={handleUpdateDate}
+														disabled={isUpdating}
+														className="p-1 hover:bg-emerald-500/20 rounded-md text-emerald-500 transition-colors disabled:opacity-50"
+													>
+														{isUpdating ? (
+															<Loader2 className="w-3 h-3 animate-spin" />
+														) : (
+															<Check className="w-3 h-3" />
+														)}
+													</button>
+													<button
+														onClick={() => setIsEditingDate(false)}
+														className="p-1 hover:bg-red-500/20 rounded-md text-red-400 transition-colors"
+													>
+														<X className="w-3 h-3" />
+													</button>
+												</div>
+											</div>
+										) : (
 											<button
-												onClick={handleUpdateDate}
-												disabled={isUpdating}
-												className="p-1 hover:bg-emerald-500/20 rounded-md text-emerald-500 transition-colors disabled:opacity-50"
+												onClick={() => setIsEditingDate(true)}
+												className="text-[7px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2 hover:text-emerald-500 transition-all bg-slate-900/40 px-2.5 py-1 rounded-full border border-white/5 active:scale-95"
 											>
-												{isUpdating ? (
-													<Loader2 className="w-3.5 h-3.5 animate-spin" />
-												) : (
-													<Check className="w-3.5 h-3.5" />
-												)}
+												<Calendar className="w-3 h-3" />
+												{new Date(localTx.date).toLocaleDateString("id", {
+													day: "2-digit",
+													month: "short",
+													year: "numeric",
+												})}{" "}
+												{new Date(localTx.date).toLocaleTimeString("id", {
+													hour: "2-digit",
+													minute: "2-digit",
+												})}
 											</button>
-											<button
-												onClick={() => setIsEditingDate(false)}
-												className="p-1 hover:bg-red-500/20 rounded-md text-red-400 transition-colors"
-											>
-												<X className="w-3.5 h-3.5" />
-											</button>
+										)}
+									</div>
+									<DrawerTitle className="text-sm font-black italic text-slate-100 break-words leading-tight line-clamp-2">
+										{localTx.description || localTx.raw_input}
+									</DrawerTitle>
+									<div className="text-md font-black italic mt-0.5 text-slate-200">
+										{localTx.type === "expense" ? "-" : "+"} {formatIDR(localTx.amount)}
+									</div>
+								</DrawerHeader>
+
+								<div className="grid grid-cols-1 gap-3">
+									<div className="p-3 bg-slate-900/40 rounded-2xl space-y-1 shadow-inner border border-white/5">
+										<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+											<Info className="w-3 h-3" /> Input Asli
+										</div>
+										<div className="text-[10px] font-bold italic text-slate-300 break-words whitespace-pre-wrap">
+											"{localTx.raw_input}"
 										</div>
 									</div>
-								) : (
-									<button
-										onClick={() => setIsEditingDate(true)}
-										className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2 hover:text-emerald-500 transition-all bg-slate-900/40 px-3 py-1.5 rounded-full border border-white/5 active:scale-95"
-									>
-										<Calendar className="w-3.5 h-3.5" />
-										{new Date(localTx.date).toLocaleDateString("id", {
-											day: "2-digit",
-											month: "long",
-											year: "numeric",
-										})}{" "}
-										{new Date(localTx.date).toLocaleTimeString("id", {
-											hour: "2-digit",
-											minute: "2-digit",
-										})}
-									</button>
-								)}
-							</div>
-							<DrawerTitle className="text-xl font-black italic text-slate-100 break-words leading-tight">
-								{localTx.description || localTx.raw_input}
-							</DrawerTitle>
-							<div className="text-2xl font-black italic mt-1 text-slate-200">
-								{localTx.type === "expense" ? "-" : "+"} {formatIDR(localTx.amount)}
-							</div>
-						</DrawerHeader>
 
-						<div className="grid grid-cols-1 gap-3">
-							<div className="p-3.5 bg-slate-900/40 rounded-2xl space-y-1 shadow-inner border border-white/5">
-								<div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-									<Info className="w-3 h-3" /> Input Asli
-								</div>
-								<div className="text-[13px] font-bold italic text-slate-300 break-words whitespace-pre-wrap">
-									"{localTx.raw_input}"
-								</div>
-							</div>
+									<div className="flex gap-3">
+										<div className="flex-1 p-3 bg-slate-900/40 border border-white/5 rounded-2xl space-y-1 shadow-sm">
+											<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+												<Tag className="w-3 h-3" /> Kategori
+											</div>
+											<div className="text-[10px] font-black italic text-slate-200">
+												{localTx.category_name}
+											</div>
+										</div>
+										<div className="flex-1 p-3 bg-slate-900/40 border border-white/5 rounded-2xl space-y-1 shadow-sm overflow-hidden">
+											<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+												<FileText className="w-3 h-3" /> Catatan
+											</div>
+											<div className="text-[10px] font-bold italic text-slate-400 break-words whitespace-pre-wrap">
+												{localTx.notes || "-"}
+											</div>
+										</div>
+									</div>
 
-							<div className="flex gap-3">
-								<div className="flex-1 p-3.5 bg-slate-900/40 border border-white/5 rounded-2xl space-y-1 shadow-sm">
-									<div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-										<Tag className="w-3 h-3" /> Kategori
-									</div>
-									<div className="text-[13px] font-black italic text-slate-200">
-										{localTx.category_name}
+									{/* Include in Budget Toggle */}
+									<div className="p-3 bg-slate-900/40 rounded-2xl flex items-center justify-between border border-white/5 shadow-inner">
+										<div className="flex items-center gap-3">
+											<div
+												className={cn(
+													"p-2 rounded-xl transition-all duration-300",
+													localTx.include_in_budget === 1
+														? "bg-emerald-500/10 text-emerald-400"
+														: "bg-slate-800 text-slate-600",
+												)}
+											>
+												<PieChart className="w-3.5 h-3.5" />
+											</div>
+											<div className="text-left">
+												<p className="text-[8px] font-black italic text-slate-100 uppercase tracking-tight">
+													Libatkan Anggaran
+												</p>
+												<p className="text-[6px] font-bold text-slate-500 uppercase tracking-tighter">
+													Pengaruhi sisa kuota gaji
+												</p>
+											</div>
+										</div>
+										<button
+											onClick={handleToggleBudget}
+											disabled={isUpdating}
+											className={cn(
+												"w-10 h-5 rounded-full relative transition-all duration-300 active:scale-95 shadow-lg",
+												localTx.include_in_budget === 1
+													? "bg-emerald-600 shadow-emerald-500/10"
+													: "bg-slate-800",
+											)}
+										>
+											<div
+												className={cn(
+													"absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
+													localTx.include_in_budget === 1 ? "left-6" : "left-1",
+												)}
+											/>
+										</button>
 									</div>
 								</div>
-								<div className="flex-1 p-3.5 bg-slate-900/40 border border-white/5 rounded-2xl space-y-1 shadow-sm overflow-hidden">
-									<div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-										<FileText className="w-3 h-3" /> Catatan
-									</div>
-									<div className="text-[13px] font-bold italic text-slate-400 break-words whitespace-pre-wrap">
-										{localTx.notes || "-"}
-									</div>
-								</div>
-							</div>
-
-							{/* Include in Budget Toggle */}
-							<div className="p-3.5 bg-slate-900/40 rounded-2xl flex items-center justify-between border border-white/5 shadow-inner">
-								<div className="flex items-center gap-3">
-									<div
-										className={cn(
-											"p-2 rounded-xl transition-all duration-300",
-											localTx.include_in_budget === 1
-												? "bg-emerald-500/10 text-emerald-400"
-												: "bg-slate-800 text-slate-600",
-										)}
-									>
-										<PieChart className="w-3.5 h-3.5" />
-									</div>
-									<div className="text-left">
-										<p className="text-[10px] font-black italic text-slate-100 uppercase tracking-tight">
-											Libatkan Anggaran
-										</p>
-										<p className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">
-											Pengaruhi sisa kuota gaji
-										</p>
-									</div>
-								</div>
-								<button
-									onClick={handleToggleBudget}
-									disabled={isUpdating}
-									className={cn(
-										"w-10 h-5 rounded-full relative transition-all duration-300 active:scale-95 shadow-lg",
-										localTx.include_in_budget === 1
-											? "bg-emerald-600 shadow-emerald-500/10"
-											: "bg-slate-800",
-									)}
-								>
-									<div
-										className={cn(
-											"absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
-											localTx.include_in_budget === 1 ? "left-6" : "left-1",
-										)}
-									/>
-								</button>
 							</div>
 						</div>
 
-						<DrawerFooter className="p-0 pt-4 flex-row gap-3">
+						<DrawerFooter className="p-6 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,1.5rem))] border-t border-white/5 bg-[#070b1a]/80 backdrop-blur-md shrink-0 flex-row gap-3">
 							<Button
 								variant="outline"
-								className="flex-1 h-11 rounded-xl border-white/10 text-slate-500 font-black uppercase tracking-widest text-[9px] bg-slate-900/20"
+								className="flex-1 h-11 rounded-xl border-white/10 text-slate-500 font-black uppercase tracking-widest text-[7px] bg-slate-900/20"
 								onClick={onClose}
 							>
 								Tutup
 							</Button>
 							<Button
 								variant="destructive"
-								className="flex-1 h-11 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-xl shadow-red-950/20 border-b-4 border-red-900 active:border-b-0 active:translate-y-1"
+								className="flex-1 h-11 rounded-xl font-black uppercase tracking-widest text-[7px] shadow-xl shadow-red-950/20 border-b-4 border-red-900 active:border-b-0 active:translate-y-1"
 								onClick={() => onDelete(localTx.id)}
 							>
 								Hapus
 							</Button>
 						</DrawerFooter>
-					</div>
+					</>
 				)}
 			</DrawerContent>
 		</Drawer>

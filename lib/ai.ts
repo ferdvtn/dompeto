@@ -191,37 +191,34 @@ ${dbSummary}
  */
 export async function scanReceipt(base64Image: string) {
 	const systemInstruction = `
-Kamu adalah OCR & Financial Parser cerdas. Tugasmu mengekstrak item belanja dari gambar struk.
-Kembalikan data dalam format JSON murni.
+Kamu adalah OCR struk belanja untuk aplikasi keuangan Indonesia.
+Ekstrak SETIAP item sebagai baris terpisah dan kembalikan JSON murni.
 
 ATURAN DISKON & VOUCHER:
-- Jika ada baris "VOUCHER", "DISKON", "DISC", "POTONGAN" setelah sebuah item, nilai tersebut adalah diskon untuk item di atasnya.
-- originalAmount = harga asli item (sebelum diskon)
-- discount = total voucher/diskon untuk item tersebut (integer positif, bukan negatif)
-- amount = originalAmount - discount (harga final yang benar-benar dibayar)
+- Baris "VOUCHER", "DISKON", "DISC", "POTONGAN" setelah item = diskon item di atasnya
+- originalAmount = harga asli sebelum diskon
+- discount = nilai diskon (integer positif)
+- amount = originalAmount - discount
 - Jika tidak ada diskon: discount = 0, amount = originalAmount
-- JANGAN gunakan originalAmount sebagai amount final jika ada voucher.
-- SELALU gunakan nilai "TOTAL BELANJA" atau "TOTAL" dari struk sebagai validasi.
-- Jika SUM(items.amount) berbeda lebih dari 5% dari total struk, periksa ulang voucher yang mungkin terlewat.
+- VALIDASI: SUM(items.amount) harus mendekati TOTAL BELANJA di struk (toleransi 5%)
 
-PANDUAN KATEGORI:
-- "Makan & Minuman": makanan siap makan, minuman, snack, susu, roti, beras, bumbu masak, mie instan, gula, tepung, kopi, teh, makanan bayi
-- "Belanja": produk rumah tangga NON-makanan seperti deterjen, sabun mandi, sampo, minyak goreng, pembersih lantai, tisu, popok, pembalut, pasta gigi, peralatan dapur, produk kecantikan, body wash
-- "Kesehatan": obat-obatan, vitamin, suplemen, masker kesehatan, alat kesehatan
-- "Transport": bensin, parkir, tol, ojek, tiket kendaraan
-- "Tagihan & Utilitas": listrik, air, internet, pulsa, token listrik
-- "Pendidikan": buku, alat tulis, kursus, perlengkapan sekolah
-- "Hiburan": game, streaming, bioskop, mainan
-- "Lainnya": tidak masuk kategori manapun di atas
+PANDUAN KATEGORI (gunakan nama PERSIS seperti ini):
+- "Makanan & Minuman": makanan, minuman, snack, susu, roti, beras, bumbu, mie, gula, kopi, teh
+- "Belanja": minyak goreng, deterjen, sabun, sampo, body wash, tisu, popok, pasta gigi, produk kecantikan
+- "Kesehatan": obat, vitamin, suplemen, alat kesehatan
+- "Transport": bensin, parkir, tol
+- "Tagihan & Utilitas": listrik, air, internet, pulsa
+- "Pendidikan": buku, alat tulis
+- "Hiburan": game, streaming, mainan
+- "Lainnya": tidak masuk kategori manapun
 
-PENTING — JANGAN SALAH KATEGORI:
-- Minyak goreng → "Belanja" BUKAN "Makan & Minuman"
-- Deterjen, sabun, sampo, body wash → "Belanja"
+PENTING:
+- Minyak goreng → "Belanja" BUKAN "Makanan & Minuman"
+- Sabun, sampo, body wash → "Belanja"
 - Susu UHT, susu formula → "Makan & Minuman"
 - Struk supermarket sering campur item makanan dan non-makanan, kategorikan per item secara teliti.
 
 ATURAN UMUM:
-- Abaikan baris pajak (PPN), subtotal, NON TUNAI, ANDA HEMAT, HARGA JUAL — hanya ekstrak item produk.
 - Jika harga tidak terbaca → amount: 0.
 - description max 60 karakter, gunakan nama yang mudah dimengerti (bukan kode singkat).
 
@@ -239,12 +236,22 @@ FORMAT OUTPUT (JSON):
 		const chatCompletion = await groq.chat.completions.create({
 			messages: [
 				{
+					role: "system",
+					content: systemInstruction,
+				},
+				{
 					role: "user",
 					content: [
-						{ type: "text", text: systemInstruction },
+						{
+							type: "text",
+							text:
+								"Ekstrak dan kelompokkan semua item dari struk ini berdasarkan kategori. Pastikan perhitungan voucher/diskon sudah dikurangi dari setiap item.",
+						},
 						{
 							type: "image_url",
-							image_url: { url: `data:image/jpeg;base64,${base64Image}` },
+							image_url: {
+								url: `data:image/jpeg;base64,${base64Image}`,
+							},
 						},
 					],
 				},
@@ -254,11 +261,26 @@ FORMAT OUTPUT (JSON):
 			temperature: 0,
 		})
 
-		const responseText = chatCompletion.choices[0]?.message?.content || "{}"
-		console.log("Groq Vision Raw Response:", responseText)
-		return JSON.parse(responseText)
+		const responseText = chatCompletion.choices[0]?.message?.content ?? "{}"
+
+		const parsed = JSON.parse(responseText)
+
+		// Validasi struktur dasar
+		if (!parsed.items || !Array.isArray(parsed.items)) {
+			throw new Error("Format response tidak valid: items tidak ditemukan")
+		}
+
+		// Normalisasi: pastikan semua field ada dan amount adalah integer
+		parsed.items = parsed.items.map(
+			(item: { name?: string; amount?: number; category?: string }) => ({
+				name: item.name ?? "Item tidak diketahui",
+				amount: Math.round(item.amount ?? 0),
+				category: item.category ?? "Lainnya",
+			}),
+		)
+
+		return parsed
 	} catch (error) {
-		console.error("Groq Vision Error:", error)
 		throw new Error("Gagal menganalisis struk")
 	}
 }

@@ -351,64 +351,76 @@ export function AddTransactionModal({
 										</span>
 									</div>
 
-									<div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1 custom-scrollbar">
+									<div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar min-h-[40vh]">
 										{scanResult.items.map((item: any, idx: number) => (
 											<div
 												key={idx}
-												className="flex flex-col gap-1 py-3 border-b border-white/5 last:border-0 group"
+												className="p-4 bg-slate-900/60 rounded-2xl border border-white/5 hover:border-emerald-500/20 transition-all relative group"
 											>
-												<div className="flex justify-between items-start">
-													<input
-														className="text-[11px] font-bold text-slate-100 bg-transparent border-none focus:ring-1 focus:ring-emerald-500/30 rounded px-1 -ml-1 w-full"
-														value={item.name}
-														onChange={(e) => updateScanItem(idx, "name", e.target.value)}
-													/>
-													<div className="flex items-center gap-1">
-														<span className="text-[10px] font-bold text-slate-600">Rp</span>
+												<button
+													onClick={() => {
+														const newItems = scanResult.items.filter(
+															(_: any, i: number) => i !== idx,
+														)
+														setScanResult({ ...scanResult, items: newItems })
+													}}
+													className="absolute -top-2 -right-2 w-7 h-7 bg-slate-800 border border-white/10 rounded-full flex items-center justify-center text-slate-500 hover:text-red-400 shadow-lg active:scale-95 transition-all z-10"
+												>
+													<X className="w-4 h-4" />
+												</button>
+
+												<div className="space-y-3">
+													{/* Item Name Input */}
+													<div className="relative">
 														<input
-															type="number"
-															className="text-[11px] font-black italic text-red-400 bg-transparent border-none focus:ring-1 focus:ring-emerald-500/30 rounded px-1 w-20 text-right"
-															value={item.amount}
-															onChange={(e) =>
-																updateScanItem(idx, "amount", Number(e.target.value))
-															}
+															className="w-full text-sm font-bold text-slate-100 bg-transparent border-b border-white/5 focus:border-emerald-500/50 outline-none pb-1 transition-colors"
+															value={item.name}
+															placeholder="Nama barang..."
+															onChange={(e) => updateScanItem(idx, "name", e.target.value)}
 														/>
 													</div>
-												</div>
-												<div className="flex items-center gap-2">
-													<select
-														className="text-[9px] font-black uppercase text-slate-500 tracking-tighter bg-slate-900/60 border border-white/5 rounded px-1.5 py-0.5 focus:border-emerald-500/50 outline-none"
-														value={item.category}
-														onChange={(e) => updateScanItem(idx, "category", e.target.value)}
-													>
-														{[
-															"Makan & Minuman",
-															"Transport",
-															"Belanja",
-															"Hiburan",
-															"Kesehatan",
-															"Tagihan & Utilitas",
-															"Pendidikan",
-															"Invest",
-															"Lainnya",
-														].map((c) => (
-															<option key={c} value={c}>
-																{c}
-															</option>
-														))}
-													</select>
-													<div className="h-px flex-1 bg-white/5" />
-													<button
-														onClick={() => {
-															const newItems = scanResult.items.filter(
-																(_: any, i: number) => i !== idx,
-															)
-															setScanResult({ ...scanResult, items: newItems })
-														}}
-														className="text-slate-600 hover:text-red-400 transition-colors"
-													>
-														<X className="w-3 h-3" />
-													</button>
+
+													<div className="flex items-center gap-3">
+														{/* Category Selector */}
+														<div className="flex-1">
+															<select
+																className="w-full text-[10px] font-black uppercase text-slate-400 tracking-wider bg-slate-800/50 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-emerald-500/30 transition-all appearance-none"
+																value={item.category}
+																onChange={(e) =>
+																	updateScanItem(idx, "category", e.target.value)
+																}
+															>
+																{[
+																	"Makan & Minuman",
+																	"Transport",
+																	"Belanja",
+																	"Hiburan",
+																	"Kesehatan",
+																	"Tagihan & Utilitas",
+																	"Pendidikan",
+																	"Invest",
+																	"Lainnya",
+																].map((c) => (
+																	<option key={c} value={c}>
+																		{c}
+																	</option>
+																))}
+															</select>
+														</div>
+
+														{/* Amount Input */}
+														<div className="flex items-center gap-2 bg-slate-800/50 border border-white/10 rounded-lg px-3 py-2 focus-within:border-emerald-500/30 transition-all w-32 shrink-0">
+															<span className="text-[10px] font-black text-slate-600">Rp</span>
+															<input
+																type="number"
+																className="w-full text-xs font-black italic text-red-400 bg-transparent border-none outline-none text-right"
+																value={item.amount}
+																onChange={(e) =>
+																	updateScanItem(idx, "amount", Number(e.target.value))
+																}
+															/>
+														</div>
+													</div>
 												</div>
 											</div>
 										))}
