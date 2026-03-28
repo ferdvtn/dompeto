@@ -186,20 +186,43 @@ export function AddTransactionModal({
 		}
 	}
 
+	const updateScanItem = (index: number, field: string, value: any) => {
+		if (!scanResult) return
+		const newItems = [...scanResult.items]
+		newItems[index] = { ...newItems[index], [field]: value }
+		setScanResult({ ...scanResult, items: newItems })
+	}
+
 	const handleBulkConfirm = async () => {
 		if (!scanResult) return
 		setLoading(true)
 		try {
+			// Group items by category
+			const groupedItems = scanResult.items.reduce((acc: any[], item: any) => {
+				const existing = acc.find((g) => g.category === item.category)
+				if (existing) {
+					existing.amount += item.amount
+					existing.name += `, ${item.name}`
+					// Limit description length
+					if (existing.name.length > 100) {
+						existing.name = existing.name.substring(0, 97) + "..."
+					}
+				} else {
+					acc.push({ ...item })
+				}
+				return acc
+			}, [])
+
 			const res = await fetch("/api/transactions/bulk", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					items: scanResult.items,
+					items: groupedItems,
 					date: scanResult.date,
 				}),
 			})
 			if (!res.ok) throw new Error("Gagal menyimpan semua transaksi")
-			toast.success(`${scanResult.items.length} transaksi berhasil dicatat`)
+			toast.success(`${groupedItems.length} kategori transaksi berhasil dicatat`)
 			setIsOpen(false)
 			resetForm()
 			onSuccess?.()
@@ -311,12 +334,20 @@ export function AddTransactionModal({
 							<div className="space-y-4">
 								<div className="p-4 bg-slate-800/40 rounded-2xl border border-white/10 space-y-3">
 									<div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
-										<span className="flex items-center gap-1.5">
-											<ShoppingCart className="w-3 h-3" /> {scanResult.items.length} Item
+										<span className="flex items-center gap-1.5 text-emerald-500">
+											<ShoppingCart className="w-3 h-3" /> {scanResult.items.length} Barang
+											Terdeteksi
 										</span>
-										<span className="flex items-center gap-1.5">
+										<span className="flex items-center gap-1.5 hover:text-slate-300 cursor-pointer">
 											<Calendar className="w-3 h-3" />{" "}
-											{scanResult.date || "Tanggal hari ini"}
+											<input
+												type="date"
+												className="bg-transparent border-none outline-none text-right w-24"
+												value={scanResult.date || ""}
+												onChange={(e) =>
+													setScanResult({ ...scanResult, date: e.target.value })
+												}
+											/>
 										</span>
 									</div>
 
@@ -324,35 +355,82 @@ export function AddTransactionModal({
 										{scanResult.items.map((item: any, idx: number) => (
 											<div
 												key={idx}
-												className="flex justify-between items-start py-2 border-b border-white/5 last:border-0 group"
+												className="flex flex-col gap-1 py-3 border-b border-white/5 last:border-0 group"
 											>
-												<div className="space-y-0.5">
-													<div className="text-[11px] font-bold text-slate-100 italic transition-colors group-hover:text-emerald-400">
-														{item.name}
-													</div>
-													<div className="text-[9px] font-black uppercase text-slate-500 tracking-tighter">
-														{item.category}
+												<div className="flex justify-between items-start">
+													<input
+														className="text-[11px] font-bold text-slate-100 bg-transparent border-none focus:ring-1 focus:ring-emerald-500/30 rounded px-1 -ml-1 w-full"
+														value={item.name}
+														onChange={(e) => updateScanItem(idx, "name", e.target.value)}
+													/>
+													<div className="flex items-center gap-1">
+														<span className="text-[10px] font-bold text-slate-600">Rp</span>
+														<input
+															type="number"
+															className="text-[11px] font-black italic text-red-400 bg-transparent border-none focus:ring-1 focus:ring-emerald-500/30 rounded px-1 w-20 text-right"
+															value={item.amount}
+															onChange={(e) =>
+																updateScanItem(idx, "amount", Number(e.target.value))
+															}
+														/>
 													</div>
 												</div>
-												<div className="text-[11px] font-black italic text-red-400">
-													{formatIDR(item.amount)}
+												<div className="flex items-center gap-2">
+													<select
+														className="text-[9px] font-black uppercase text-slate-500 tracking-tighter bg-slate-900/60 border border-white/5 rounded px-1.5 py-0.5 focus:border-emerald-500/50 outline-none"
+														value={item.category}
+														onChange={(e) => updateScanItem(idx, "category", e.target.value)}
+													>
+														{[
+															"Makan & Minuman",
+															"Transport",
+															"Belanja",
+															"Hiburan",
+															"Kesehatan",
+															"Tagihan & Utilitas",
+															"Pendidikan",
+															"Invest",
+															"Lainnya",
+														].map((c) => (
+															<option key={c} value={c}>
+																{c}
+															</option>
+														))}
+													</select>
+													<div className="h-px flex-1 bg-white/5" />
+													<button
+														onClick={() => {
+															const newItems = scanResult.items.filter(
+																(_: any, i: number) => i !== idx,
+															)
+															setScanResult({ ...scanResult, items: newItems })
+														}}
+														className="text-slate-600 hover:text-red-400 transition-colors"
+													>
+														<X className="w-3 h-3" />
+													</button>
 												</div>
 											</div>
 										))}
 									</div>
 
-									<div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex justify-between items-center">
-										<span className="text-[10px] font-black uppercase text-emerald-500/80">
-											Estimasi Total
-										</span>
-										<span className="text-sm font-black italic text-emerald-400">
-											{formatIDR(
-												scanResult.items.reduce(
-													(acc: number, item: any) => acc + item.amount,
-													0,
-												),
-											)}
-										</span>
+									<div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col gap-2">
+										<div className="flex justify-between items-center">
+											<span className="text-[10px] font-black uppercase text-emerald-500/80">
+												Total Item Terpilih
+											</span>
+											<span className="text-sm font-black italic text-emerald-400">
+												{formatIDR(
+													scanResult.items.reduce(
+														(acc: number, item: any) => acc + item.amount,
+														0,
+													),
+												)}
+											</span>
+										</div>
+										<p className="text-[8px] text-slate-500 font-bold uppercase italic text-center border-t border-emerald-500/10 pt-1.5">
+											Transaksi akan disimpan berkelompok per kategori
+										</p>
 									</div>
 								</div>
 							</div>

@@ -194,22 +194,42 @@ export async function scanReceipt(base64Image: string) {
 Kamu adalah OCR & Financial Parser cerdas. Tugasmu mengekstrak item belanja dari gambar struk.
 Kembalikan data dalam format JSON murni.
 
-ATURAN EKSTRAKSI:
-1. Hanya ambil item belanja riil (barang/jasa yang dibeli).
-2. ABAIKAN/BUANG item berikut: 
-   - DISKON, PROMO, VOUCHER, POTONGAN HARGA (pindahkan nilainya untuk mengurangi harga item terkait jika perlu, tapi JANGAN masukkan sebagai item terpisah).
-   - "ANDA HEMAT", "SAVINGS", "TOTAL DISKON".
-   - Item dengan harga 0 atau negatif.
-   - Pajak (PPN/Tax) dan Service Charge (masukkan ke item 'Lainnya' jika ada, atau abaikan jika kecil).
-3. Untuk setiap item, tentukan kategori yang paling cocok:
-   - Makan & Minuman, Transport, Belanja, Hiburan, Kesehatan, Tagihan, Pendidikan, Invest, Lainnya.
-4. Estimasi tanggal struk (format YYYY-MM-DD). Jika tidak ada, gunakan null.
+ATURAN DISKON & VOUCHER:
+- Jika ada baris "VOUCHER", "DISKON", "DISC", "POTONGAN" setelah sebuah item, nilai tersebut adalah diskon untuk item di atasnya.
+- originalAmount = harga asli item (sebelum diskon)
+- discount = total voucher/diskon untuk item tersebut (integer positif, bukan negatif)
+- amount = originalAmount - discount (harga final yang benar-benar dibayar)
+- Jika tidak ada diskon: discount = 0, amount = originalAmount
+- JANGAN gunakan originalAmount sebagai amount final jika ada voucher.
+- SELALU gunakan nilai "TOTAL BELANJA" atau "TOTAL" dari struk sebagai validasi.
+- Jika SUM(items.amount) berbeda lebih dari 5% dari total struk, periksa ulang voucher yang mungkin terlewat.
+
+PANDUAN KATEGORI:
+- "Makan & Minuman": makanan siap makan, minuman, snack, susu, roti, beras, bumbu masak, mie instan, gula, tepung, kopi, teh, makanan bayi
+- "Belanja": produk rumah tangga NON-makanan seperti deterjen, sabun mandi, sampo, minyak goreng, pembersih lantai, tisu, popok, pembalut, pasta gigi, peralatan dapur, produk kecantikan, body wash
+- "Kesehatan": obat-obatan, vitamin, suplemen, masker kesehatan, alat kesehatan
+- "Transport": bensin, parkir, tol, ojek, tiket kendaraan
+- "Tagihan & Utilitas": listrik, air, internet, pulsa, token listrik
+- "Pendidikan": buku, alat tulis, kursus, perlengkapan sekolah
+- "Hiburan": game, streaming, bioskop, mainan
+- "Lainnya": tidak masuk kategori manapun di atas
+
+PENTING — JANGAN SALAH KATEGORI:
+- Minyak goreng → "Belanja" BUKAN "Makan & Minuman"
+- Deterjen, sabun, sampo, body wash → "Belanja"
+- Susu UHT, susu formula → "Makan & Minuman"
+- Struk supermarket sering campur item makanan dan non-makanan, kategorikan per item secara teliti.
+
+ATURAN UMUM:
+- Abaikan baris pajak (PPN), subtotal, NON TUNAI, ANDA HEMAT, HARGA JUAL — hanya ekstrak item produk.
+- Jika harga tidak terbaca → amount: 0.
+- description max 60 karakter, gunakan nama yang mudah dimengerti (bukan kode singkat).
 
 FORMAT OUTPUT (JSON):
 {
   "date": "YYYY-MM-DD",
   "items": [
-    { "name": "Nama Barang", "amount": 15000, "category": "Makan & Minuman" },
+    { "name": "<Nama-nama Barang di kategori tersebut, pisahkan dengan koma>", "amount": 15000, "category": "Makan & Minuman" },
     ...
   ]
 }
