@@ -203,17 +203,18 @@ ATURAN DISKON & VOUCHER:
 - VALIDASI: SUM(items.amount) harus mendekati TOTAL BELANJA di struk (toleransi 5%)
 
 PANDUAN KATEGORI (gunakan nama PERSIS seperti ini):
-- "Makanan & Minuman": makanan, minuman, snack, susu, roti, beras, bumbu, mie, gula, kopi, teh
+- "Makan & Minuman": makanan, minuman, snack, susu, roti, beras, bumbu, mie, gula, kopi, teh
 - "Belanja": minyak goreng, deterjen, sabun, sampo, body wash, tisu, popok, pasta gigi, produk kecantikan
 - "Kesehatan": obat, vitamin, suplemen, alat kesehatan
 - "Transport": bensin, parkir, tol
-- "Tagihan & Utilitas": listrik, air, internet, pulsa
+- "Tagihan": listrik, air, internet, pulsa
 - "Pendidikan": buku, alat tulis
 - "Hiburan": game, streaming, mainan
+- "Invest": reksa dana, saham, obligasi, emas
 - "Lainnya": tidak masuk kategori manapun
 
 PENTING:
-- Minyak goreng → "Belanja" BUKAN "Makanan & Minuman"
+- Minyak goreng → "Belanja" BUKAN "Makan & Minuman"
 - Sabun, sampo, body wash → "Belanja"
 - Susu UHT, susu formula → "Makan & Minuman"
 - Struk supermarket sering campur item makanan dan non-makanan, kategorikan per item secara teliti.

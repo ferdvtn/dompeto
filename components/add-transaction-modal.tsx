@@ -13,6 +13,8 @@ import {
 	Image as ImageIcon,
 	X,
 	ShoppingCart,
+	Tag,
+	FileText,
 } from "lucide-react"
 import {
 	Drawer,
@@ -257,22 +259,55 @@ export function AddTransactionModal({
 			}}
 		>
 			<DrawerTrigger asChild>{children}</DrawerTrigger>
-			<DrawerContent className="rounded-t-[2rem] bg-[#0f172a] border-t border-white/5 outline-none max-h-[96dvh] flex flex-col shadow-2xl overflow-hidden">
-				<div className="mx-auto w-10 h-1 bg-slate-800 rounded-full my-4 shrink-0" />
+			<DrawerContent
+				className={cn(
+					"rounded-t-[2rem] bg-[#0f172a] border-t border-white/5 outline-none flex flex-col shadow-2xl overflow-hidden transition-all duration-500",
+					scanResult || confirmationData
+						? "h-[100vh] h-[100dvh] rounded-none border-none"
+						: "max-h-[96dvh]",
+				)}
+			>
+				{!(scanResult || confirmationData) && (
+					<div className="mx-auto w-10 h-1 bg-slate-800 rounded-full my-4 shrink-0" />
+				)}
 
-				<div className="flex-1 overflow-y-auto px-6 pb-2 custom-scrollbar">
-					<DrawerHeader className="p-0 text-left mb-4">
-						<DrawerTitle className="text-lg font-black italic flex items-center gap-3 text-slate-100">
-							<Sparkles
-								className={cn("w-5 h-5 text-emerald-500", loading && "animate-pulse")}
-							/>
-							{scanResult ? "Hasil Scan Struk" : "AI Dompeto"}
+				<div
+					className={cn(
+						"flex-1 overflow-y-auto px-6 custom-scrollbar flex flex-col",
+						scanResult || confirmationData ? "pt-6 pb-0" : "pb-2",
+					)}
+				>
+					<DrawerHeader className="p-0 text-left mb-6 shrink-0">
+						<DrawerTitle className="text-xl font-black italic flex items-center justify-between text-slate-100">
+							<div className="flex items-center gap-3">
+								<Sparkles
+									className={cn("w-6 h-6 text-emerald-500", loading && "animate-pulse")}
+								/>
+								<span>
+									{scanResult
+										? "Daftar Transaksi"
+										: confirmationData
+											? "Konfirmasi"
+											: "AI Dompeto"}
+								</span>
+							</div>
+							{(scanResult || confirmationData) && (
+								<button
+									onClick={() => {
+										resetForm()
+										setIsOpen(false)
+									}}
+									className="p-2 hover:bg-white/5 rounded-full transition-colors"
+								>
+									<X className="w-5 h-5 text-slate-500" />
+								</button>
+							)}
 						</DrawerTitle>
 					</DrawerHeader>
 
-					<div className="space-y-5 py-2 font-sans">
+					<div className="flex-1 min-h-0 font-sans">
 						{!confirmationData && !scanResult ? (
-							<div className="space-y-5">
+							<div className="space-y-5 py-2">
 								<div className="space-y-4">
 									<div className="space-y-2">
 										<label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
@@ -331,125 +366,115 @@ export function AddTransactionModal({
 								</div>
 							</div>
 						) : scanResult ? (
-							<div className="space-y-4">
-								<div className="p-4 bg-slate-800/40 rounded-2xl border border-white/10 space-y-3">
-									<div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
-										<span className="flex items-center gap-1.5 text-emerald-500">
-											<ShoppingCart className="w-3 h-3" /> {scanResult.items.length} Barang
-											Terdeteksi
+							<div className="flex flex-col h-full gap-4">
+								<div className="flex justify-between items-center bg-slate-800/20 p-3 rounded-2xl border border-white/5 shrink-0">
+									<div className="flex flex-col">
+										<span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">
+											Total Terdeteksi
 										</span>
-										<span className="flex items-center gap-1.5 hover:text-slate-300 cursor-pointer">
-											<Calendar className="w-3 h-3" />{" "}
-											<input
-												type="date"
-												className="bg-transparent border-none outline-none text-right w-24"
-												value={scanResult.date || ""}
-												onChange={(e) =>
-													setScanResult({ ...scanResult, date: e.target.value })
-												}
-											/>
+										<span className="text-lg font-black italic text-emerald-400">
+											{formatIDR(
+												scanResult.items.reduce(
+													(acc: number, item: any) => acc + item.amount,
+													0,
+												),
+											)}
 										</span>
 									</div>
+									<div className="relative group">
+										<Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald-500" />
+										<input
+											type="date"
+											className="bg-slate-900/60 pl-9 pr-3 py-2 rounded-xl border border-white/10 outline-none text-[11px] font-bold text-slate-200 focus:border-emerald-500/30 transition-all [color-scheme:dark]"
+											value={scanResult.date || ""}
+											onChange={(e) =>
+												setScanResult({ ...scanResult, date: e.target.value })
+											}
+										/>
+									</div>
+								</div>
 
-									<div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar min-h-[40vh]">
-										{scanResult.items.map((item: any, idx: number) => (
-											<div
-												key={idx}
-												className="p-4 bg-slate-900/60 rounded-2xl border border-white/5 hover:border-emerald-500/20 transition-all relative group"
-											>
-												<button
-													onClick={() => {
-														const newItems = scanResult.items.filter(
-															(_: any, i: number) => i !== idx,
-														)
-														setScanResult({ ...scanResult, items: newItems })
-													}}
-													className="absolute -top-2 -right-2 w-7 h-7 bg-slate-800 border border-white/10 rounded-full flex items-center justify-center text-slate-500 hover:text-red-400 shadow-lg active:scale-95 transition-all z-10"
-												>
-													<X className="w-4 h-4" />
-												</button>
-
-												<div className="space-y-3">
-													{/* Item Name Input */}
-													<div className="relative">
+								<div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+									{scanResult.items.map((item: any, idx: number) => (
+										<div
+											key={idx}
+											className="p-4 bg-slate-900/40 rounded-2xl border border-white/5 hover:border-emerald-500/20 transition-all relative group"
+										>
+											<div className="flex flex-col gap-4">
+												{/* Row 1: Name & Delete */}
+												<div className="flex items-start gap-3">
+													<div className="flex-1 relative group/input">
 														<input
-															className="w-full text-sm font-bold text-slate-100 bg-transparent border-b border-white/5 focus:border-emerald-500/50 outline-none pb-1 transition-colors"
+															className="w-full text-[15px] font-bold text-white bg-transparent border-none focus:ring-0 outline-none p-0 placeholder:text-slate-700"
 															value={item.name}
-															placeholder="Nama barang..."
+															placeholder="Nama item..."
 															onChange={(e) => updateScanItem(idx, "name", e.target.value)}
 														/>
+														<div className="absolute bottom-0 left-0 w-full h-[1px] bg-white/5 group-focus-within/input:bg-emerald-500/50 transition-colors" />
+													</div>
+													<button
+														onClick={() => {
+															const newItems = scanResult.items.filter(
+																(_: any, i: number) => i !== idx,
+															)
+															setScanResult({ ...scanResult, items: newItems })
+														}}
+														className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0 -mt-1 -mr-1"
+													>
+														<X className="w-4 h-4" />
+													</button>
+												</div>
+
+												{/* Row 2: Category & Price */}
+												<div className="flex items-center gap-3">
+													<div className="relative flex-1">
+														<Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
+														<select
+															className="w-full pl-7 pr-2 py-2 text-[10px] font-black uppercase text-slate-400 tracking-wider bg-slate-800/40 border border-white/5 rounded-xl outline-none focus:border-emerald-500/30 transition-all appearance-none"
+															value={item.category}
+															onChange={(e) => updateScanItem(idx, "category", e.target.value)}
+														>
+															{[
+																"Makan & Minuman",
+																"Transport",
+																"Belanja",
+																"Hiburan",
+																"Kesehatan",
+																"Tagihan & Utilitas",
+																"Pendidikan",
+																"Invest",
+																"Lainnya",
+															].map((c) => (
+																<option key={c} value={c}>
+																	{c}
+																</option>
+															))}
+														</select>
 													</div>
 
-													<div className="flex items-center gap-3">
-														{/* Category Selector */}
-														<div className="flex-1">
-															<select
-																className="w-full text-[10px] font-black uppercase text-slate-400 tracking-wider bg-slate-800/50 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-emerald-500/30 transition-all appearance-none"
-																value={item.category}
-																onChange={(e) =>
-																	updateScanItem(idx, "category", e.target.value)
-																}
-															>
-																{[
-																	"Makan & Minuman",
-																	"Transport",
-																	"Belanja",
-																	"Hiburan",
-																	"Kesehatan",
-																	"Tagihan & Utilitas",
-																	"Pendidikan",
-																	"Invest",
-																	"Lainnya",
-																].map((c) => (
-																	<option key={c} value={c}>
-																		{c}
-																	</option>
-																))}
-															</select>
-														</div>
-
-														{/* Amount Input */}
-														<div className="flex items-center gap-2 bg-slate-800/50 border border-white/10 rounded-lg px-3 py-2 focus-within:border-emerald-500/30 transition-all w-32 shrink-0">
-															<span className="text-[10px] font-black text-slate-600">Rp</span>
-															<input
-																type="number"
-																className="w-full text-xs font-black italic text-red-400 bg-transparent border-none outline-none text-right"
-																value={item.amount}
-																onChange={(e) =>
-																	updateScanItem(idx, "amount", Number(e.target.value))
-																}
-															/>
-														</div>
+													<div className="flex items-center gap-2 bg-slate-800/40 border border-white/5 rounded-xl px-3 py-2 focus-within:border-emerald-500/30 transition-all w-36 shrink-0 h-9">
+														<span className="text-[10px] font-black text-slate-600 uppercase">
+															Rp
+														</span>
+														<input
+															type="number"
+															className="w-full text-sm font-black italic text-red-400 bg-transparent border-none outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+															value={item.amount}
+															onChange={(e) =>
+																updateScanItem(idx, "amount", Number(e.target.value))
+															}
+														/>
 													</div>
 												</div>
 											</div>
-										))}
-									</div>
-
-									<div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col gap-2">
-										<div className="flex justify-between items-center">
-											<span className="text-[10px] font-black uppercase text-emerald-500/80">
-												Total Item Terpilih
-											</span>
-											<span className="text-sm font-black italic text-emerald-400">
-												{formatIDR(
-													scanResult.items.reduce(
-														(acc: number, item: any) => acc + item.amount,
-														0,
-													),
-												)}
-											</span>
 										</div>
-										<p className="text-[8px] text-slate-500 font-bold uppercase italic text-center border-t border-emerald-500/10 pt-1.5">
-											Transaksi akan disimpan berkelompok per kategori
-										</p>
-									</div>
+									))}
 								</div>
 							</div>
 						) : (
-							<div className="space-y-4">
-								<div className="grid grid-cols-2 gap-3 pt-1">
-									<div className="p-3 bg-slate-800/40 rounded-2xl border border-white/10 space-y-1 shadow-inner">
+							<div className="space-y-4 py-2">
+								<div className="grid grid-cols-2 gap-3">
+									<div className="p-3 bg-slate-800/20 rounded-2xl border border-white/5 space-y-1 shadow-inner">
 										<div className="text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
 											<Receipt className="w-2.5 h-2.5" /> Nominal
 										</div>
