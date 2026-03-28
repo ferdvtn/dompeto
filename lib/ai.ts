@@ -96,7 +96,7 @@ Tugas: Analisis maksud periode waktu dari pesan pengguna dan kembalikan JSON.
 
 EKSTRAKSI:
 - "intent": 
-  * "period": Untuk pertanyaan rekap/analisa rentang waktu (misal: "rekap hari ini", "persentase makan").
+  * "period": Untuk pertanyaan rekap, analisa, atau info budget (misal: "rekap hari ini", "persentase makan", "sisa budget", "saldo").
   * "largest": Untuk mencari transaksi paling besar (misal: "top pengeluaran", "paling mahal").
   * "all": Untuk melihat semua data tanpa filter waktu tertentu.
   * "write": Untuk perintah manipulasi data (catat, hapus, edit).
@@ -106,6 +106,7 @@ EKSTRAKSI:
 
 CONTOH:
 - "Analisa persentase makan" -> intent: "period", days: 30, label: "Bulan ini"
+- "Sisa budget gaji saya?" -> intent: "period", days: 30, label: "Bulan ini"
 - "Transaksi terbesar minggu ini" -> intent: "largest", days: 7, label: "Minggu ini"
 - "Habis berapa kemarin?" -> intent: "period", days: 1, label: "Kemarin"
 

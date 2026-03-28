@@ -18,8 +18,8 @@ import { useRouter } from "next/navigation"
 const CHAT_SUGGESTIONS = [
 	"Rekap pengeluaran hari ini",
 	"Sisa budget gaji saya?",
-	"Analisa persentase makan",
-	"Transaksi terbesar minggu ini",
+	"Habis berapa kemarin?",
+	"Pengeluaran 30 hari terakhir",
 	"Total pemasukan bulan ini",
 ]
 

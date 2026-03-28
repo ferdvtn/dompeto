@@ -68,10 +68,27 @@ export async function POST(req: NextRequest) {
 			sql = "" // No data needed
 		} else if (intentData.intent === "largest") {
 			sql = `
-        SELECT t.description, t.amount, c.name as category 
+        SELECT t.description, t.amount, t.type, c.name as category 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
+        WHERE t.date >= datetime('now', '+7 hours', '-${intentData.days} days')
         ORDER BY t.amount DESC LIMIT 5
+      `
+		} else if (intentData.label.toLowerCase() === "hari ini") {
+			sql = `
+        SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
+        FROM transactions t
+        LEFT JOIN categories c ON t.category_id = c.id
+        WHERE date(t.date) = date('now', '+7 hours')
+        GROUP BY t.type, c.name ORDER BY total DESC
+      `
+		} else if (intentData.label.toLowerCase() === "kemarin") {
+			sql = `
+        SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
+        FROM transactions t
+        LEFT JOIN categories c ON t.category_id = c.id
+        WHERE date(t.date) = date('now', '+7 hours', '-1 day')
+        GROUP BY t.type, c.name ORDER BY total DESC
       `
 		} else if (intentData.label.toLowerCase().includes("bulan lalu")) {
 			// Special handling for calendar last month
@@ -83,12 +100,12 @@ export async function POST(req: NextRequest) {
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 		} else {
-			// Dynamic period based on days
+			// Dynamic period based on days (range)
 			sql = `
         SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        WHERE t.date >= datetime('now', '+7 hours', '-${intentData.days} days')
+        WHERE date(t.date) >= date('now', '+7 hours', '-${intentData.days - 1} days')
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 		}
@@ -118,12 +135,16 @@ Status: ${spent > budget ? "OVER BUDGET" : "Aman"}\n\n`
 				let totalIncome = 0
 				let breakdown = "Kategori:\n"
 				result.rows.forEach((row: any) => {
-					if (row.type === "expense") {
-						totalExpense += Number(row.total || 0)
-						breakdown += `- ${row.category}: Rp ${Number(row.total).toLocaleString("id-ID")} (${row.count}x)\n`
-					} else if (row.type === "income") {
-						totalIncome += Number(row.total || 0)
-						breakdown += `- ${row.category}: Rp ${Number(row.total).toLocaleString("id-ID")} (${row.count}x)\n`
+					if (intentData.intent === "largest") {
+						breakdown += `- ${row.category}: Rp ${Number(row.amount).toLocaleString("id-ID")} (${row.description || "Tanpa deskripsi"})\n`
+					} else {
+						if (row.type === "expense") {
+							totalExpense += Number(row.total || 0)
+							breakdown += `- ${row.category}: Rp ${Number(row.total).toLocaleString("id-ID")} (${row.count}x)\n`
+						} else if (row.type === "income") {
+							totalIncome += Number(row.total || 0)
+							breakdown += `- ${row.category}: Rp ${Number(row.total).toLocaleString("id-ID")} (${row.count}x)\n`
+						}
 					}
 				})
 				if (intentData.intent === "largest") {
