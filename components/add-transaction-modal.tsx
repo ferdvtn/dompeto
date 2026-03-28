@@ -394,11 +394,17 @@ export function AddTransactionModal({
 									</div>
 								</div>
 
-								<div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+								<div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar pb-80 scroll-smooth">
 									{scanResult.items.map((item: any, idx: number) => (
 										<div
 											key={idx}
-											className="p-4 bg-slate-900/40 rounded-2xl border border-white/5 hover:border-emerald-500/20 transition-all relative group"
+											onFocus={(e) => {
+												e.currentTarget.scrollIntoView({
+													behavior: "smooth",
+													block: "center",
+												})
+											}}
+											className="p-4 bg-slate-900/40 rounded-2xl border border-white/5 hover:border-emerald-500/20 transition-all relative group scroll-mt-4"
 										>
 											<div className="flex flex-col gap-4">
 												{/* Row 1: Name & Delete */}
