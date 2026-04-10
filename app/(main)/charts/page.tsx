@@ -13,6 +13,7 @@ import {
 	BarChart,
 	Bar,
 	LabelList,
+	ReferenceLine,
 } from "recharts"
 import {
 	Card,
@@ -44,6 +45,21 @@ export default function ChartsPage() {
 		return "Rp " + new Intl.NumberFormat("id-ID").format(val)
 	}
 
+	const averageExpense =
+		data?.daily?.length > 0
+			? data.daily.reduce((sum: number, item: any) => sum + item.amount, 0) /
+				data.daily.length
+			: 0
+
+	const remainingBudget = (data?.cycle?.budget || 0) - (data?.cycle?.spent || 0)
+	const recommendedDaily =
+		data?.cycle?.daysLeft > 0
+			? Math.max(0, Math.round(remainingBudget / data.cycle.daysLeft))
+			: Math.max(0, remainingBudget)
+
+	const isOverBudget = !loading && data?.cycle?.spent > data?.cycle?.budget
+	const remainingPercent = data?.cycle?.percent || 0
+
 	return (
 		<div className="p-4 pb-5 space-y-6">
 			<h1 className="text-2xl font-black italic text-slate-100">Analitik</h1>
@@ -52,7 +68,7 @@ export default function ChartsPage() {
 			<Card
 				className={cn(
 					"shadow-2xl rounded-[2rem] overflow-hidden backdrop-blur-md border border-white/10",
-					!loading && data?.cycle?.spent > data?.cycle?.budget
+					isOverBudget
 						? "bg-red-600/20 border-red-500/20 text-red-100 shadow-red-950/20"
 						: "bg-emerald-600/20 border-emerald-500/20 text-emerald-100 shadow-emerald-950/20",
 				)}
@@ -75,9 +91,7 @@ export default function ChartsPage() {
 					<div
 						className={cn(
 							"text-xl font-black italic mb-4 min-h-[28px]",
-							!loading && data?.cycle?.spent > data?.cycle?.budget
-								? "text-red-300"
-								: "text-emerald-300",
+							isOverBudget ? "text-red-300" : "text-emerald-300",
 						)}
 					>
 						{loading ? (
@@ -115,8 +129,15 @@ export default function ChartsPage() {
 							data?.cycle?.spent <= data?.cycle?.budget && (
 								<div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
 									<div
-										className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000"
-										style={{ width: `${data?.cycle?.percent}%` }}
+										className={cn(
+											"h-full transition-all duration-1000",
+											remainingPercent > 30
+												? "bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+												: remainingPercent > 10
+													? "bg-amber-500 shadow-amber-500/50"
+													: "bg-red-500 shadow-red-500/50",
+										)}
+										style={{ width: `${remainingPercent}%` }}
 									/>
 								</div>
 							)
@@ -146,6 +167,21 @@ export default function ChartsPage() {
 								)}
 							</div>
 						</div>
+
+						{/* Recommended Daily Spend */}
+						{!loading && data?.cycle?.budget > 0 && (
+							<div className="pt-2 mt-2 border-t border-white/5 flex items-center justify-between">
+								<div className="flex items-center gap-1.5">
+									<Wallet className="w-3 h-3 opacity-40" />
+									<span className="text-[8px] font-bold uppercase tracking-wider opacity-40">
+										Rekomendasi harian
+									</span>
+								</div>
+								<span className="text-[11px] font-black italic text-emerald-300">
+									{formatIDR(recommendedDaily)}
+								</span>
+							</div>
+						)}
 					</div>
 				</CardContent>
 			</Card>
@@ -308,6 +344,24 @@ export default function ChartsPage() {
 											}
 										/>
 									</Bar>
+									{averageExpense > 0 && (
+										<ReferenceLine
+											y={averageExpense}
+											stroke="#f59e0b"
+											strokeDasharray="3 3"
+											strokeWidth={2}
+											label={{
+												value: `${Math.round(averageExpense / 1000)}k`,
+												position: "insideTopRight",
+												dx: -10,
+												dy: -15,
+												fill: "#f59e0b",
+												fontSize: 10,
+												fontWeight: "bold",
+												fontStyle: "italic",
+											}}
+										/>
+									)}
 									<defs>
 										<linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
 											<stop offset="0%" stopColor="#06b6d4" />

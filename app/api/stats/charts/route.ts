@@ -24,13 +24,33 @@ export async function GET() {
     `)
 
 		// 3. Line Chart: Daily Trend (Last 7 days)
+		// Use -6 days to get exactly 7 days including today
 		const lineRes = await db.execute(`
       SELECT date(date) as date, SUM(amount) as amount
       FROM transactions
-      WHERE type = 'expense' AND date(date) >= date('now', '+7 hours', '-7 days')
+      WHERE type = 'expense' AND date(date) >= date('now', '+7 hours', '-6 days')
       GROUP BY date(date)
       ORDER BY date ASC
     `)
+
+		// Normalize data to ensure 7 entries (even if 0)
+		const today = getJakartaISODate()
+		const dailyData: { [key: string]: number } = {}
+		lineRes.rows.forEach((row: any) => {
+			dailyData[row.date] = Number(row.amount) || 0
+		})
+
+		const last7Days = []
+		for (let i = 6; i >= 0; i--) {
+			const d = new Date()
+			d.setHours(d.getHours() + 7) // Jakarta time
+			d.setDate(d.getDate() - i)
+			const dateStr = d.toISOString().split("T")[0]
+			last7Days.push({
+				date: dateStr,
+				amount: dailyData[dateStr] || 0,
+			})
+		}
 
 		// 4. Monthly Cycle (Salary Cycle)
 		// Get current Jakarta date info
@@ -71,7 +91,7 @@ export async function GET() {
 
 		return NextResponse.json({
 			categories: pieRes.rows,
-			daily: lineRes.rows,
+			daily: last7Days,
 			cycle: {
 				spent: spent,
 				budget: budget,
