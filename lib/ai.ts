@@ -32,7 +32,7 @@ FORMAT OUTPUT (hanya JSON):
 KATEGORI YANG TERSEDIA & CONTOH KEYWORD:
 - Makan & Minuman: kopi, boba, warteg, nasi goreng, gofood, grabfood, jajan, pasar
 - Transport: bensin, gojek, grab, pertalite, parkir, tol, tiket
-- Belanja: alfamart, indomaret, shopee, tokopedia, baju, skin care
+- Belanja: alfamart, indomaret, shopee, tokopedia, baju, skin care, pempers, gas, elpiji
 - Hiburan: bioskop, netflix, game, spotify, staycation
 - Kesehatan: apotek, dokter, rumah sakit, obat, vitamin
 - Tagihan: listrik, pdam, wifi, pulsa, rumah, kontrakan, cicilan, kost
@@ -42,6 +42,7 @@ KATEGORI YANG TERSEDIA & CONTOH KEYWORD:
 - Lainnya: jika benar-benar tidak cocok dengan kategori di atas
 
 ATURAN PARSING:
+- "gas", "elpiji", "pempers" -> Belanja.
 - "rumah" -> jika nominal besar, masukkan ke Tagihan (kontrakan/cicilan).
 - "kopi" -> Makan & Minuman.
 - "10k", "10rb" = 10000.
@@ -204,7 +205,7 @@ ATURAN DISKON & VOUCHER:
 
 PANDUAN KATEGORI (gunakan nama PERSIS seperti ini):
 - "Makan & Minuman": makanan, minuman, snack, susu, roti, beras, bumbu, mie, gula, kopi, teh
-- "Belanja": minyak goreng, deterjen, sabun, sampo, body wash, tisu, popok, pasta gigi, produk kecantikan
+- "Belanja": minyak goreng, deterjen, sabun, sampo, body wash, tisu, popok, pempers, pasta gigi, produk kecantikan, gas elpiji
 - "Kesehatan": obat, vitamin, suplemen, alat kesehatan
 - "Transport": bensin, parkir, tol
 - "Tagihan": listrik, air, internet, pulsa
