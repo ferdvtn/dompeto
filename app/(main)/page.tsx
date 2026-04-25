@@ -5,6 +5,7 @@ import {
 	Plus,
 	Wallet,
 	TrendingDown,
+	TrendingUp,
 	ArrowUpRight,
 	History,
 	Calendar,
@@ -114,13 +115,28 @@ export default function Dashboard() {
 				<Card className="bg-slate-800/40 border border-white/10 shadow-premium rounded-2xl">
 					<CardContent className="p-3.5 flex flex-col gap-3">
 						<div className="flex items-center gap-2 text-slate-500 text-[9px] font-bold uppercase tracking-widest">
-							<TrendingDown className="w-2.5 h-2.5 text-red-400" /> Hari Ini
+							{data?.spentToday && data.spentToday < 0 ? (
+								<TrendingUp className="w-2.5 h-2.5 text-emerald-400" />
+							) : (
+								<TrendingDown className="w-2.5 h-2.5 text-red-400" />
+							)}{" "}
+							Hari Ini
 						</div>
-						<div className="text-sm font-black italic text-red-500/90 min-h-[20px]">
+						<div
+							className={cn(
+								"text-sm font-black italic min-h-[20px]",
+								data?.spentToday && data.spentToday < 0
+									? "text-emerald-500/90"
+									: "text-red-500/90",
+							)}
+						>
 							{loading ? (
 								<Skeleton className="h-5 w-24 bg-slate-800/40" />
 							) : (
-								formatIDR(data?.spentToday || 0)
+								<>
+									{data?.spentToday && data.spentToday < 0 ? "+ " : ""}
+									{formatIDR(Math.abs(data?.spentToday || 0))}
+								</>
 							)}
 						</div>
 					</CardContent>

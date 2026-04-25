@@ -23,23 +23,38 @@ import {
 	CardDescription,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TrendingUp, Wallet, Calendar, AlertTriangle } from "lucide-react"
+import { TrendingUp, Wallet, Calendar, AlertTriangle, ChevronLeft, ChevronRight, CalendarDays, Trophy } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { CategoryIcon } from "@/components/category-icon"
 
 const COLORS = ["#10b981", "#06b6d4", "#f59e0b", "#ef4444", "#8b5cf6"]
 
 export default function ChartsPage() {
 	const [data, setData] = useState<any>(null)
 	const [loading, setLoading] = useState(true)
+	const [cycleOffset, setCycleOffset] = useState(0)
 
 	useEffect(() => {
-		fetch("/api/stats/charts")
+		setLoading(true)
+		fetch(`/api/stats/charts?offset=${cycleOffset}`)
 			.then((res) => res.json())
 			.then((d) => {
 				setData(d)
 				setLoading(false)
 			})
-	}, [])
+	}, [cycleOffset])
+
+	const handlePrevCycle = () => setCycleOffset((prev) => prev - 1)
+	const handleNextCycle = () => setCycleOffset((prev) => prev + 1)
+
+	const formatDateRange = (startStr: string, endStr: string) => {
+		if (!startStr || !endStr) return ""
+		const start = new Date(startStr)
+		const end = new Date(endStr)
+		end.setDate(end.getDate() - 1)
+		const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" }
+		return `${start.toLocaleDateString("id-ID", options)} - ${end.toLocaleDateString("id-ID", options)}`
+	}
 
 	const formatIDR = (val: number) => {
 		return "Rp " + new Intl.NumberFormat("id-ID").format(val)
@@ -61,8 +76,11 @@ export default function ChartsPage() {
 	const remainingPercent = data?.cycle?.percent || 0
 
 	return (
-		<div className="p-4 pb-5 space-y-6">
-			<h1 className="text-2xl font-black italic text-slate-100">Analitik</h1>
+		<div className="p-4 pb-32 space-y-6 relative">
+			<div className="flex items-center justify-between">
+				<h1 className="text-2xl font-black italic text-slate-100">Analitik</h1>
+			</div>
+
 
 			{/* Salary Cycle Info */}
 			<Card
@@ -96,6 +114,8 @@ export default function ChartsPage() {
 					>
 						{loading ? (
 							<Skeleton className="h-7 w-24 bg-white/10" />
+						) : cycleOffset < 0 ? (
+							"Siklus Selesai"
 						) : (
 							<>{data?.cycle?.daysLeft} Hari Lagi</>
 						)}
@@ -113,6 +133,8 @@ export default function ChartsPage() {
 									<Skeleton className="h-3 w-20 bg-white/10" />
 								) : !loading && data?.cycle?.spent > data?.cycle?.budget ? (
 									"Anggaran Terlampaui"
+								) : cycleOffset < 0 ? (
+									"Sisa Akhir"
 								) : (
 									"Sisa Anggaran"
 								)}
@@ -169,7 +191,7 @@ export default function ChartsPage() {
 						</div>
 
 						{/* Recommended Daily Spend */}
-						{!loading && data?.cycle?.budget > 0 && (
+						{!loading && data?.cycle?.budget > 0 && cycleOffset === 0 && (
 							<div className="pt-2 mt-2 border-t border-white/5 flex items-center justify-between">
 								<div className="flex items-center gap-1.5">
 									<Wallet className="w-3 h-3 opacity-40" />
@@ -268,6 +290,7 @@ export default function ChartsPage() {
 			</Card>
 
 			{/* Daily Spending Line Chart */}
+			{cycleOffset === 0 && (
 			<Card className="bg-slate-800/40 border border-white/10 shadow-premium rounded-[2rem] backdrop-blur-md">
 				<CardHeader>
 					<div className="text-cyan-400 flex items-center gap-2 mb-1">
@@ -374,6 +397,100 @@ export default function ChartsPage() {
 					</div>
 				</CardContent>
 			</Card>
+			)}
+
+			{/* Top 3 Transactions (Past Cycles) */}
+			{cycleOffset < 0 && (
+				<div className="space-y-4 pt-2">
+					<div className="flex items-center gap-2 text-amber-400 px-1">
+						<Trophy className="w-5 h-5" />
+						<h2 className="text-[11px] font-black uppercase tracking-[0.1em]">
+							Pengeluaran Terbesar
+						</h2>
+					</div>
+					<div className="space-y-3">
+						{loading ? (
+							[...Array(3)].map((_, i) => (
+								<Skeleton key={i} className="h-16 w-full rounded-2xl bg-slate-800/30" />
+							))
+						) : data?.categories?.length === 0 ? (
+							<div className="bg-slate-900/20 border border-dashed border-white/5 rounded-2xl p-6 text-center">
+								<p className="text-slate-500 text-[10px] font-bold italic">
+									Tidak ada data pengeluaran
+								</p>
+							</div>
+						) : (
+							data?.categories?.slice(0, 3).map((cat: any, index: number) => (
+								<div
+									key={cat.name}
+									className="group flex items-center justify-between p-3 bg-slate-800/40 border border-white/10 rounded-2xl shadow-premium relative overflow-hidden"
+								>
+									<div className="flex items-center gap-3 min-w-0 flex-1">
+										<div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shadow-inner border border-white/5 shrink-0">
+											<CategoryIcon
+												name={cat.icon || "Wallet"}
+												className="w-5 h-5 text-emerald-500/80"
+											/>
+										</div>
+										<div className="min-w-0 flex-1">
+											<div className="text-xs font-bold text-slate-100 italic line-clamp-1">
+												{cat.name}
+											</div>
+											<div className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">
+												Top {index + 1}
+											</div>
+										</div>
+									</div>
+									<div className="flex items-center gap-3 shrink-0 ml-4">
+										<div className="text-xs font-black italic text-red-400">
+											- {formatIDR(cat.value)}
+										</div>
+									</div>
+								</div>
+							))
+						)}
+					</div>
+				</div>
+			)}
+
+			{/* Floating Bottom Navigation */}
+			<div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[320px] px-4 z-50">
+				<div className="flex items-center justify-between bg-slate-900/90 border border-white/10 rounded-full p-2 backdrop-blur-xl shadow-[0_0_40px_rgba(0,0,0,0.5)] shadow-premium">
+					<button
+						onClick={handlePrevCycle}
+						disabled={cycleOffset <= -1}
+						className="p-3 rounded-full hover:bg-white/5 text-slate-400 hover:text-emerald-400 transition-colors active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 disabled:active:scale-100"
+					>
+						<ChevronLeft className="w-5 h-5" />
+					</button>
+
+					<div className="flex flex-col items-center justify-center pointer-events-none">
+						<div className="flex items-center gap-1.5 text-emerald-400 mb-0.5">
+							<CalendarDays className="w-3.5 h-3.5" />
+							<span className="text-[9px] font-black uppercase tracking-[0.2em]">
+								Siklus
+							</span>
+						</div>
+						<span className="text-[11px] font-bold text-slate-200">
+							{loading ? (
+								<Skeleton className="h-4 w-28 bg-white/10" />
+							) : data?.cycle?.start && data?.cycle?.end ? (
+								formatDateRange(data.cycle.start, data.cycle.end)
+							) : (
+								"Memuat..."
+							)}
+						</span>
+					</div>
+
+					<button
+						onClick={handleNextCycle}
+						disabled={cycleOffset >= 0}
+						className="p-3 rounded-full hover:bg-white/5 text-slate-400 hover:text-emerald-400 transition-colors active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 disabled:active:scale-100"
+					>
+						<ChevronRight className="w-5 h-5" />
+					</button>
+				</div>
+			</div>
 		</div>
 	)
 }

@@ -3,18 +3,37 @@ import { db } from "@/lib/db"
 import { getJakartaDateTime } from "@/lib/date-utils"
 import { parseTransaction } from "@/lib/ai"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
 	try {
-		const result = await db.execute({
-			sql: `
+		const url = req.nextUrl
+		const search = url.searchParams.get("search") || ""
+		const page = parseInt(url.searchParams.get("page") || "1", 10)
+		const limit = parseInt(url.searchParams.get("limit") || "20", 10)
+		const sortParam = url.searchParams.get("sort") === "asc" ? "ASC" : "DESC"
+		const offset = (page - 1) * limit
+
+		let baseQuery = `
         SELECT t.*, c.name as category_name, c.icon as category_icon 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        ORDER BY t.date DESC, t.created_at DESC LIMIT 50
-      `,
-			args: [],
+      `
+		const queryParams: any[] = []
+
+		if (search) {
+			baseQuery += ` WHERE t.description LIKE ? OR c.name LIKE ? OR t.raw_input LIKE ?`
+			const searchPattern = `%${search}%`
+			queryParams.push(searchPattern, searchPattern, searchPattern)
+		}
+
+		baseQuery += ` ORDER BY t.date ${sortParam}, t.created_at ${sortParam} LIMIT ? OFFSET ?`
+		queryParams.push(limit, offset)
+
+		const result = await db.execute({
+			sql: baseQuery,
+			args: queryParams,
 		})
-		return NextResponse.json(result.rows)
+		const hasMore = result.rows.length === limit
+		return NextResponse.json({ data: result.rows, hasMore })
 	} catch (error) {
 		console.error("GET Transactions Error:", error)
 		return NextResponse.json(

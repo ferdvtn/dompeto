@@ -23,7 +23,7 @@ export async function GET() {
           SUM(CASE WHEN type = 'expense' THEN amount ELSE -amount END) as spent_today,
           COUNT(*) as count_today
         FROM transactions 
-        WHERE date(date) = ?
+        WHERE date(date) = ? AND include_in_budget = 1
       `,
 			args: [today],
 		})
