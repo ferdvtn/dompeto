@@ -63,18 +63,52 @@ export async function GET(req: Request) {
 			args: [cycleStart, cycleEnd],
 		})
 
-		// 4. Line Chart: Daily Trend (Last 7 days relative to today, as requested to ignore changes for now)
+		// 4. Line Chart: Daily Trend (Last 7 days relative to today)
 		const lineRes = await db.execute(`
-      SELECT date(date) as date, SUM(amount) as amount
-      FROM transactions
-      WHERE type = 'expense' AND date(date) >= date('now', '+7 hours', '-6 days')
-      GROUP BY date(date)
+      SELECT 
+        date(t.date) as date, 
+        SUM(t.amount) as total_amount,
+        SUM(CASE WHEN c.name IN ('Invest', 'Tagihan') THEN t.amount ELSE 0 END) as excluded_amount,
+        SUM(CASE WHEN c.name NOT IN ('Invest', 'Tagihan') OR c.name IS NULL THEN t.amount ELSE 0 END) as regular_amount
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.type = 'expense' AND date(t.date) >= date('now', '+7 hours', '-6 days')
+      GROUP BY date(t.date)
       ORDER BY date ASC
     `)
 
-		const dailyData: { [key: string]: number } = {}
+		const breakdownRes = await db.execute(`
+      SELECT 
+        date(t.date) as date,
+        c.name as category_name,
+        c.icon as category_icon,
+        SUM(t.amount) as amount
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.type = 'expense' AND date(t.date) >= date('now', '+7 hours', '-6 days')
+      GROUP BY date(t.date), c.name
+      ORDER BY date ASC, amount DESC
+    `)
+
+		const dailyData: { [key: string]: any } = {}
 		lineRes.rows.forEach((row: any) => {
-			dailyData[row.date] = Number(row.amount) || 0
+			dailyData[row.date] = {
+				totalAmount: Number(row.total_amount) || 0,
+				excludedAmount: Number(row.excluded_amount) || 0,
+				regularAmount: Number(row.regular_amount) || 0,
+				breakdown: [],
+			}
+		})
+
+		breakdownRes.rows.forEach((row: any) => {
+			if (dailyData[row.date]) {
+				dailyData[row.date].breakdown.push({
+					name: row.category_name || "Lainnya",
+					icon: row.category_icon || "Wallet",
+					amount: Number(row.amount) || 0,
+					isExcluded: ["Invest", "Tagihan"].includes(row.category_name),
+				})
+			}
 		})
 
 		const last7Days = []
@@ -83,9 +117,18 @@ export async function GET(req: Request) {
 			d.setHours(d.getHours() + 7) // Jakarta time
 			d.setDate(d.getDate() - i)
 			const dateStr = d.toISOString().split("T")[0]
+			const dayData = dailyData[dateStr] || {
+				totalAmount: 0,
+				excludedAmount: 0,
+				regularAmount: 0,
+				breakdown: [],
+			}
 			last7Days.push({
 				date: dateStr,
-				amount: dailyData[dateStr] || 0,
+				amount: dayData.totalAmount,
+				excludedAmount: dayData.excludedAmount,
+				regularAmount: dayData.regularAmount,
+				breakdown: dayData.breakdown,
 			})
 		}
 

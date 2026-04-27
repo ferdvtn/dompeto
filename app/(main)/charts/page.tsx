@@ -62,7 +62,7 @@ export default function ChartsPage() {
 
 	const averageExpense =
 		data?.daily?.length > 0
-			? data.daily.reduce((sum: number, item: any) => sum + item.amount, 0) /
+			? data.daily.reduce((sum: number, item: any) => sum + item.regularAmount, 0) /
 				data.daily.length
 			: 0
 
@@ -335,26 +335,78 @@ export default function ChartsPage() {
 									<YAxis hide />
 									<Tooltip
 										cursor={{ fill: "rgba(255,255,255,0.03)" }}
-										contentStyle={{
-											backgroundColor: "#0f172a",
-											borderRadius: "16px",
-											border: "1px solid rgba(255,255,255,0.05)",
-											boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
-											fontSize: "12px",
-											fontWeight: "bold",
-											fontStyle: "italic",
+										content={({ active, payload, label }) => {
+											if (active && payload && payload.length) {
+												const data = payload[0].payload
+												const regularBreakdown = data.breakdown.filter((b: any) => !b.isExcluded)
+												const excludedBreakdown = data.breakdown.filter((b: any) => b.isExcluded)
+												const date = new Date(label || "")
+												const dateStr = date.toLocaleDateString("id-ID", { 
+													day: "numeric", 
+													month: "short", 
+													year: "numeric" 
+												})
+
+												return (
+													<div className="bg-slate-900/95 border border-white/10 rounded-2xl p-4 shadow-2xl backdrop-blur-xl min-w-[180px]">
+														<div className="text-[10px] uppercase tracking-widest font-black text-slate-500 mb-2">
+															{dateStr}
+														</div>
+														<div className="flex flex-col gap-3">
+															<div className="flex flex-col">
+																<span className="text-[9px] font-bold text-cyan-400 uppercase tracking-tighter">
+																	Pengeluaran Rutin
+																</span>
+																<span className="text-sm font-black italic text-slate-100">
+																	{formatIDR(data.regularAmount)}
+																</span>
+															</div>
+
+															{regularBreakdown.length > 0 && (
+																<div className="space-y-1.5 pt-2 border-t border-white/5">
+																	{regularBreakdown.map((item: any, idx: number) => (
+																		<div key={idx} className="flex items-center justify-between gap-4">
+																			<div className="flex items-center gap-1.5">
+																				<CategoryIcon name={item.icon} className="w-3 h-3 text-slate-400" />
+																				<span className="text-[10px] font-bold text-slate-400 italic">
+																					{item.name}
+																				</span>
+																			</div>
+																			<span className="text-[10px] font-black text-slate-300">
+																				{formatIDR(item.amount)}
+																			</span>
+																		</div>
+																	))}
+																</div>
+															)}
+
+															{data.excludedAmount > 0 && (
+																<div className="pt-2 border-t border-white/10 mt-1">
+																	<div className="flex flex-col opacity-40">
+																		<span className="text-[8px] font-bold uppercase tracking-tighter">
+																			Invest & Tagihan (Excluded)
+																		</span>
+																		<span className="text-[11px] font-black italic">
+																			{formatIDR(data.excludedAmount)}
+																		</span>
+																	</div>
+																</div>
+															)}
+														</div>
+													</div>
+												)
+											}
+											return null
 										}}
-										itemStyle={{ color: "#22d3ee" }}
-										formatter={(val: any) => [formatIDR(Number(val || 0)), "Keluar"]}
 									/>
 									<Bar
-										dataKey="amount"
+										dataKey="regularAmount"
 										fill="url(#barGradient)"
 										radius={[8, 8, 0, 0]}
 										barSize={28}
 									>
 										<LabelList
-											dataKey="amount"
+											dataKey="regularAmount"
 											position="top"
 											style={{
 												fontSize: "8px",
