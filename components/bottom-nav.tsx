@@ -1,52 +1,46 @@
 "use client"
-
-import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, PieChart, Settings, MessageSquare } from "lucide-react"
-import { cn } from "@/lib/utils"
-
-const NAV_ITEMS = [
-	{ label: "Home", href: "/", icon: Home },
-	{ label: "Grafik", href: "/charts", icon: PieChart },
-	{ label: "AI Chat", href: "/chat", icon: MessageSquare },
-	{ label: "Setelan", href: "/settings", icon: Settings },
+import {
+	House,
+	List,
+	ChartNoAxesCombined,
+	Sparkles,
+	Settings,
+	Wallet,
+} from "lucide-react"
+const links = [
+	{ href: "/", label: "Beranda", icon: House },
+	{ href: "/transactions", label: "Transaksi", icon: List },
+	{ href: "/charts", label: "Grafik", icon: ChartNoAxesCombined },
+	{ href: "/chat", label: "AI", icon: Sparkles },
 ]
-
 export function BottomNav() {
-	const pathname = usePathname()
-	const [mounted, setMounted] = useState(false)
-
-	useEffect(() => {
-		setMounted(true)
-	}, [])
-
-	if (!mounted) return null
-
+	const path = usePathname()
 	return (
-		<nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-gray-900/80 backdrop-blur-lg border-t border-gray-800 pb-safe-area-inset-bottom z-50">
-			<div className="flex justify-around items-center h-16 max-w-md mx-auto">
-				{NAV_ITEMS.map((item) => {
-					const isActive = pathname === item.href
-					const Icon = item.icon
-
-					return (
-						<Link
-							key={item.href}
-							href={item.href}
-							className={cn(
-								"flex flex-col items-center justify-center gap-1 w-full h-full transition-colors",
-								isActive ? "text-emerald-400" : "text-gray-400 hover:text-gray-200",
-							)}
-						>
-							<Icon className="w-5 h-5" />
-							<span className="text-[9px] font-bold uppercase tracking-widest">
-								{item.label}
-							</span>
-						</Link>
-					)
-				})}
-			</div>
+		<nav className="app-nav" aria-label="Navigasi utama">
+			<Link className="nav-brand" href="/">
+				<Wallet />
+				Dompeto
+			</Link>
+			{links.map(({ href, label, icon: Icon }) => (
+				<Link
+					key={href}
+					href={href}
+					aria-current={path === href ? "page" : undefined}
+				>
+					<Icon size={22} />
+					<span>{label}</span>
+				</Link>
+			))}
+			<Link
+				className="desktop-settings"
+				href="/settings"
+				aria-current={path === "/settings" ? "page" : undefined}
+			>
+				<Settings size={22} />
+				Pengaturan
+			</Link>
 		</nav>
 	)
 }

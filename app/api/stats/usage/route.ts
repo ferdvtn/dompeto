@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getJakartaISODate } from "@/lib/date-utils"
 
-export async function GET(req: NextRequest) {
+export async function GET() {
 	try {
 		const today = getJakartaISODate()
 		const result = await db.execute({
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 			args: [today],
 		})
 
-		const stats = (result.rows[0] as any) || {
+		const stats = result.rows[0] || {
 			chat_used: 0,
 			parse_used: 0,
 		}

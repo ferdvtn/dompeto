@@ -1,63 +1,32 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getJakartaISODate } from "@/lib/date-utils"
-
+import { getCycle } from "@/lib/finance-server"
 export async function GET() {
 	try {
-		const today = getJakartaISODate()
-
-		// 1. Total Balance (Income - Expense)
-		const balanceRes = await db.execute(`
-      SELECT 
-        SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
-        SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
-      FROM transactions
-    `)
-		const { total_income = 0, total_expense = 0 } = balanceRes.rows[0] as any
-		const balance = (total_income || 0) - (total_expense || 0)
-
-		// 2. Daily Metrics (Spent today & Count)
-		const dailyRes = await db.execute({
-			sql: `
-        SELECT 
-          SUM(CASE WHEN type = 'expense' THEN amount ELSE -amount END) as spent_today,
-          COUNT(*) as count_today
-        FROM transactions 
-        WHERE date(date) = ? AND include_in_budget = 1
-      `,
-			args: [today],
-		})
-		const { spent_today = 0, count_today = 0 } = dailyRes.rows[0] as any
-
-		// 3. Latest 5 Transactions
-		const latestRes = await db.execute(`
-      SELECT t.*, c.name as category_name, c.icon as category_icon
-      FROM transactions t
-      LEFT JOIN categories c ON t.category_id = c.id
-      ORDER BY t.date DESC, t.created_at DESC LIMIT 5
-    `)
-
-		// 4. Cycle Info (for Settings & UI)
-		const settingsRes = await db.execute("SELECT key, value FROM settings")
-		const settings: { [key: string]: string } = {}
-		settingsRes.rows.forEach((row: any) => {
-			settings[row.key] = row.value
-		})
-
+		const [balance, daily, latest, cycle] = await Promise.all([
+			db.execute(
+				"SELECT COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE -amount END),0) AS balance FROM transactions",
+			),
+			db.execute({
+				sql: "SELECT COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END),0) AS spent, COUNT(*) AS count FROM transactions WHERE date(date)=?",
+				args: [getJakartaISODate()],
+			}),
+			db.execute(
+				"SELECT t.*, c.name AS category_name, c.icon AS category_icon FROM transactions t LEFT JOIN categories c ON t.category_id=c.id ORDER BY t.date DESC,t.created_at DESC,t.id DESC LIMIT 5",
+			),
+			getCycle(),
+		])
 		return NextResponse.json({
-			balance,
-			spentToday: spent_today || 0,
-			countToday: count_today || 0,
-			latestTransactions: latestRes.rows,
-			cycle: {
-				salary_day: settings.salary_day || "25",
-				budget: settings.monthly_budget || "0",
-			},
+			balance: Number(balance.rows[0].balance),
+			spentToday: Number(daily.rows[0].spent),
+			countToday: Number(daily.rows[0].count),
+			latestTransactions: latest.rows,
+			cycle,
 		})
-	} catch (error) {
-		console.error("Dashboard Stats Error:", error)
+	} catch {
 		return NextResponse.json(
-			{ error: "Gagal mengambil statistik dashboard." },
+			{ error: "Gagal mengambil ringkasan" },
 			{ status: 500 },
 		)
 	}

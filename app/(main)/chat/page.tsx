@@ -1,197 +1,182 @@
 "use client"
-
-import { useState, useEffect, useRef } from "react"
-import {
-	Send,
-	Bot,
-	User,
-	Loader2,
-	Sparkles,
-	Receipt,
-	ArrowLeft,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
-import { useRouter } from "next/navigation"
-
-const CHAT_SUGGESTIONS = [
-	"Rekap pengeluaran hari ini",
-	"Sisa budget gaji saya?",
-	"Habis berapa kemarin?",
-	"Pengeluaran 30 hari terakhir",
-	"Total pemasukan bulan ini",
-]
-
+import { useEffect, useRef, useState } from "react"
+import { Send, Sparkles, ArrowDown } from "lucide-react"
+import { PageHeader } from "@/components/page-ui"
+import { api, jsonBody, errorMessage } from "@/lib/client-api"
+type Message = { role: "user" | "assistant"; content: string }
 export default function ChatPage() {
-	const router = useRouter()
-	const [messages, setMessages] = useState<any[]>([])
-	const [input, setInput] = useState("")
-	const [loading, setLoading] = useState(false)
-	const scrollRef = useRef<HTMLDivElement>(null)
-	const isInitialMount = useRef(true)
-
-	// Load history on mount
+	const [messages, setMessages] = useState<Message[]>([]),
+		[input, setInput] = useState(""),
+		[busy, setBusy] = useState(false),
+		[error, setError] = useState(""),
+		[failed, setFailed] = useState("")
+	const [ready, setReady] = useState(false),
+		[unread, setUnread] = useState(false)
+	const list = useRef<HTMLDivElement>(null),
+		nearBottom = useRef(true)
 	useEffect(() => {
-		const saved = localStorage.getItem("dompeto_chat_history")
-		if (saved) {
+		queueMicrotask(() => {
 			try {
-				setMessages(JSON.parse(saved))
-			} catch (e) {
-				console.error("Failed to parse chat history")
-			}
-		} else {
-			setMessages([
-				{
-					role: "assistant",
-					content:
-						"Halo! Saya asisten keuangan Dompeto. Ada yang bisa saya bantu hari ini?",
-				},
-			])
-		}
+				const saved = JSON.parse(
+					localStorage.getItem("dompeto_chat_history") || "[]",
+				)
+				if (Array.isArray(saved))
+					setMessages(
+						saved.filter(
+							(m) =>
+								typeof m.content === "string" &&
+								(m.role === "user" || m.role === "assistant"),
+						),
+					)
+			} catch {}
+			setReady(true)
+		})
 	}, [])
-
-	// Save history on change (limit 50)
 	useEffect(() => {
-		if (messages.length > 0) {
-			const toSave = messages.slice(-50)
-			localStorage.setItem("dompeto_chat_history", JSON.stringify(toSave))
-		}
-	}, [messages])
-
-	useEffect(() => {
-		if (messages.length > 0) {
-			if (isInitialMount.current) {
-				scrollRef.current?.scrollIntoView({ behavior: "auto" })
-				isInitialMount.current = false
-			} else {
-				scrollRef.current?.scrollIntoView({ behavior: "smooth" })
-			}
-		}
-	}, [messages])
-
-	const sendMessage = async (textToSend?: string) => {
-		const targetInput = textToSend || input
-		if (!targetInput.trim() || loading) return
-
-		const userMsg = { role: "user", content: targetInput }
-		setMessages((prev) => [...prev, userMsg])
-		if (!textToSend) setInput("")
-		setLoading(true)
-
+		if (!ready) return
 		try {
-			const res = await fetch("/api/chat", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ message: targetInput }),
-			})
-			const data = await res.json()
-			setMessages((prev) => [...prev, { role: "assistant", content: data.reply }])
-		} catch (err) {
-			setMessages((prev) => [
-				...prev,
-				{ role: "assistant", content: "Maaf, terjadi kesalahan pada server." },
-			])
+			localStorage.setItem(
+				"dompeto_chat_history",
+				JSON.stringify(messages.slice(-50)),
+			)
+		} catch {}
+		if (nearBottom.current)
+			list.current?.scrollTo({ top: list.current.scrollHeight })
+		else queueMicrotask(() => setUnread(true))
+	}, [messages, ready])
+	const latest = () => {
+		nearBottom.current = true
+		setUnread(false)
+		list.current?.scrollTo({ top: list.current.scrollHeight })
+	}
+	const send = async (retry = false) => {
+		const text = retry ? failed : input.trim()
+		if (!text || busy) return
+		setBusy(true)
+		setError("")
+		setFailed("")
+		if (!retry) {
+			setMessages((m) => [...m, { role: "user", content: text }])
+			setInput("")
+			nearBottom.current = true
+		}
+		try {
+			const data = await api<{ reply: string }>(
+				"/api/chat",
+				jsonBody({ message: text }),
+			)
+			if (!data.reply)
+				throw new Error("AI belum memberikan jawaban. Coba lagi.")
+			setMessages((m) => [...m, { role: "assistant", content: data.reply }])
+		} catch (e) {
+			setError(errorMessage(e))
+			setFailed(text)
 		} finally {
-			setLoading(false)
+			setBusy(false)
 		}
 	}
-
 	return (
-		<div className="flex flex-col h-[calc(100vh-5rem)] bg-[#0f172a] text-slate-100 relative">
-			{/* Header */}
-			<div className="p-4 border-b border-white/5 flex items-center gap-4 bg-slate-900/40 backdrop-blur-md sticky top-0 z-20">
-				<button
-					className="w-9 h-9 rounded-xl bg-slate-950/40 border border-white/5 flex items-center justify-center active:scale-95 transition-all"
-					onClick={() => router.back()}
-				>
-					<ArrowLeft className="w-4 h-4 text-slate-500" />
-				</button>
-				<div>
-					<h1 className="text-sm font-black italic flex items-center gap-2">
-						<Sparkles className="w-3.5 h-3.5 text-emerald-400" /> AI Asisten
-					</h1>
-					<p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-						Dompeto Intelligence
-					</p>
-				</div>
+		<div className="chat-page">
+			<div className="panel-header">
+				<PageHeader
+					title="Asisten AI"
+					subtitle="Tanyakan tentang catatan keuanganmu."
+				/>
 			</div>
-
-			{/* Chat Area */}
-			<div className="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
-				{messages.map((msg, i) => (
-					<div
-						key={i}
-						className={cn(
-							"flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
-							msg.role === "user" ? "flex-row-reverse" : "flex-row",
-						)}
-					>
-						<div
-							className={cn(
-								"w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border",
-								msg.role === "user"
-									? "bg-slate-800 border-white/10"
-									: "bg-emerald-600 border-emerald-500/20 shadow-lg shadow-emerald-950/20",
-							)}
-						>
-							{msg.role === "user" ? (
-								<User className="w-4 h-4 text-slate-400" />
-							) : (
-								<Bot className="w-4 h-4 text-white" />
-							)}
-						</div>
-						<div
-							className={cn(
-								"p-2.5 rounded-xl text-[11px] font-bold max-w-[85%] shadow-premium italic leading-relaxed whitespace-pre-wrap",
-								msg.role === "user"
-									? "bg-emerald-600 text-white rounded-tr-none"
-									: "bg-slate-900/60 border border-white/5 text-slate-200 rounded-tl-none",
-							)}
-						>
-							{msg.content}
-						</div>
-					</div>
-				))}
-				{loading && (
-					<div className="flex gap-3 items-center text-slate-600 animate-pulse italic text-xs font-bold">
-						<Loader2 className="w-4 h-4 animate-spin" />
-						Asisten sedang mengetik...
+			<div
+				className="chat-body"
+				ref={list}
+				onScroll={() => {
+					const el = list.current
+					if (el) {
+						nearBottom.current =
+							el.scrollHeight - el.scrollTop - el.clientHeight < 80
+						if (nearBottom.current) setUnread(false)
+					}
+				}}
+			>
+				{!messages.length && (
+					<div className="card mt-6">
+						<Sparkles className="text-primary mb-4" />
+						<h2>Apa yang ingin kamu ketahui?</h2>
+						<p className="muted mt-2">
+							Lihat rekap belanja, pemasukan, atau sisa anggaran dari catatanmu.
+						</p>
 					</div>
 				)}
-				<div ref={scrollRef} />
-			</div>
-
-			{/* Input Area */}
-			<div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md p-4 bg-slate-950/40 backdrop-blur-xl border-t border-white/5 space-y-4 z-20">
-				{/* Chat Suggestions */}
-				<div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-					{CHAT_SUGGESTIONS.map((s) => (
+				{messages.map((m, i) => (
+					<article key={i} className={`bubble ${m.role}`}>
+						<p className="text-xs muted mb-2">
+							{m.role === "user" ? "Kamu" : "Dompeto"}
+						</p>
+						{m.content}
+					</article>
+				))}
+				{busy && (
+					<p role="status" className="muted">
+						Menyiapkan jawaban…
+					</p>
+				)}
+				{error && (
+					<div className="card error" role="alert">
+						<p>{error}</p>
 						<button
-							key={s}
-							onClick={() => setInput(s)}
-							className="whitespace-nowrap px-3 py-1.5 bg-slate-900 border border-white/5 rounded-full text-[9px] font-bold text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 transition-all active:scale-95 shrink-0 shadow-sm"
+							className="btn mt-3"
+							disabled={busy}
+							onClick={() => send(true)}
 						>
-							{s}
+							Coba lagi
+						</button>
+					</div>
+				)}
+			</div>
+			{unread && (
+				<button className="btn mx-auto mb-2" onClick={latest}>
+					<ArrowDown size={16} />
+					Pesan terbaru
+				</button>
+			)}
+			<div className="chat-composer">
+				<div className="suggestions flex gap-2 overflow-x-auto pb-3">
+					{[
+						"Rekap pengeluaran hari ini",
+						"Sisa anggaran saya?",
+						"Total pemasukan bulan ini",
+					].map((text) => (
+						<button
+							key={text}
+							className="btn shrink-0"
+							onClick={() => setInput(text)}
+						>
+							{text}
 						</button>
 					))}
 				</div>
-
-				<div className="flex gap-3">
-					<Input
-						placeholder="Tanya apapun..."
-						className="flex-1 bg-slate-900/60 border-white/5 h-11 rounded-xl font-bold italic shadow-inner px-4 text-[11px] text-slate-100 placeholder:text-slate-700 focus-visible:ring-emerald-500/30"
+				<form
+					className="row"
+					onSubmit={(e) => {
+						e.preventDefault()
+						void send()
+					}}
+				>
+					<label className="sr-only" htmlFor="chat-input">
+						Pesan untuk AI
+					</label>
+					<input
+						id="chat-input"
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
-						onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+						placeholder="Tulis pertanyaan…"
+						maxLength={2000}
 					/>
-					<Button
-						className="h-11 w-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-950/30 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center p-0"
-						onClick={() => sendMessage()}
+					<button
+						className="btn primary"
+						aria-label="Kirim pesan"
+						disabled={busy || !input.trim()}
 					>
-						<Send className="w-4 h-4" />
-					</Button>
-				</div>
+						<Send size={20} />
+					</button>
+				</form>
 			</div>
 		</div>
 	)

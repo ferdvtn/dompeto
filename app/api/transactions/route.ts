@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
 		const page = parseInt(url.searchParams.get("page") || "1", 10)
 		const limit = parseInt(url.searchParams.get("limit") || "20", 10)
 		const sortParam = url.searchParams.get("sort") === "asc" ? "ASC" : "DESC"
+		if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) return NextResponse.json({ error: "Pagination tidak valid" }, { status: 400 })
 		const offset = (page - 1) * limit
 
 		let baseQuery = `
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
       `
-		const queryParams: any[] = []
+		const queryParams: (string | number)[] = []
 
 		if (search) {
 			baseQuery += ` WHERE t.description LIKE ? OR c.name LIKE ? OR t.raw_input LIKE ?`
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
 			queryParams.push(searchPattern, searchPattern, searchPattern)
 		}
 
-		baseQuery += ` ORDER BY t.date ${sortParam}, t.created_at ${sortParam} LIMIT ? OFFSET ?`
+		baseQuery += ` ORDER BY t.date ${sortParam}, t.created_at ${sortParam}, t.id ${sortParam} LIMIT ? OFFSET ?`
 		queryParams.push(limit, offset)
 
 		const result = await db.execute({
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
 				categoryId,
 				parsedData.description,
 				parsedData.notes,
-				1, // Default to included in budget for chat entries
+				parsedData.type === "income" ? 0 : 1,
 				getJakartaDateTime(), // Current Jakarta time as business date
 			],
 		})

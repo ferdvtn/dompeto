@@ -5,18 +5,14 @@ import { toast } from "sonner"
 
 export function NightNotification() {
 	useEffect(() => {
-		// 1. Request Browser Notification Permission
-		if ("Notification" in window && Notification.permission === "default") {
-			Notification.requestPermission()
-		}
-
 		const checkAndNotify = async () => {
+			if (localStorage.getItem("dompeto_reminders") !== "true") return
 			const now = new Date()
 			// Jakarta offset is UTC+7
 			const jakartaTime = new Date(
-				now.getTime() + now.getTimezoneOffset() * 60000 + 7 * 60 * 60 * 1000,
+				now.getTime() + 7 * 60 * 60 * 1000,
 			)
-			const hour = jakartaTime.getHours()
+			const hour = jakartaTime.getUTCHours()
 			const todayStr = jakartaTime.toISOString().split("T")[0]
 
 			// Trigger only at night (e.g., 21:00 or later)
@@ -27,6 +23,7 @@ export function NightNotification() {
 				if (lastNotifDate !== todayStr) {
 					try {
 						const res = await fetch("/api/stats/dashboard")
+						if (!res.ok) return
 						const data = await res.json()
 
 						if (data && data.spentToday !== undefined) {
@@ -42,19 +39,19 @@ export function NightNotification() {
 							// Store that we've notified today
 							localStorage.setItem("last_night_notif_date", todayStr)
 
-							// Show Browser Notification if permitted
-							if ("Notification" in window && Notification.permission === "granted") {
-								new Notification(title, {
-									body: message,
-									icon: "/icon-192x192.png", // Fallback if icon exists
-								})
-							}
-
 							// Always show in-app toast for visibility
 							toast.info(title, {
 								description: message,
 								duration: 10000,
 							})
+							// Show Browser Notification if permitted
+							if ("Notification" in window && Notification.permission === "granted") {
+								new Notification(title, {
+									body: message,
+									icon: "/android-chrome-192x192.png", // Fallback if icon exists
+								})
+							}
+
 						}
 					} catch (error) {
 						console.error("Failed to trigger night notification:", error)

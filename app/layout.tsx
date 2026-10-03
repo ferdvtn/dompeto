@@ -1,15 +1,16 @@
+import { ViewportManager } from "@/components/viewport-manager"
 import type { Metadata } from "next"
-import { Inter, Geist } from "next/font/google"
+import { Geist } from "next/font/google"
 import "./globals.css"
 import { cn } from "@/lib/utils"
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
-const inter = Inter({ subsets: ["latin"] })
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" })
 
 export const viewport = {
 	width: "device-width",
 	initialScale: 1,
-	maximumScale: 1,
+	viewportFit: "cover",
+	themeColor: "#141817",
 }
 
 export const metadata: Metadata = {
@@ -36,14 +37,11 @@ export default function RootLayout({
 	children: React.ReactNode
 }>) {
 	return (
-		<html lang="id" className={cn("font-sans overflow-x-hidden", geist.variable)}>
-			<body
-				className={`${inter.className} bg-[#020617] text-slate-100 antialiased flex justify-center overflow-x-hidden`}
-			>
-				<div className="w-full max-w-md bg-[#0f172a] min-h-svh shadow-2xl relative border-x border-white/5 flex flex-col">
-					{children}
-					<Toaster richColors position="top-center" />
-				</div>
+		<html lang="id" className={cn("dark", geist.variable)}>
+			<body>
+				<ViewportManager />
+				{children}
+				<Toaster position="top-center" />
 			</body>
 		</html>
 	)

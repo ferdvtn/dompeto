@@ -25,41 +25,46 @@ export async function PATCH(
 	req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const { id } = await params
+	let data
 	try {
-		const { id } = await params
-		const body = await req.json()
-		const { description, amount, type, category_id, date } = body
-		let { include_in_budget } = body
-
-		// If include_in_budget is not provided, fetch the existing one
-		if (include_in_budget === undefined) {
-			const existing = await db.execute({
-				sql: "SELECT include_in_budget FROM transactions WHERE id = ?",
-				args: [id],
-			})
-			include_in_budget = existing.rows[0]?.include_in_budget
-		}
-
+		const existing = await db.execute({
+			sql: "SELECT * FROM transactions WHERE id=?",
+			args: [id],
+		})
+		if (!existing.rows.length)
+			return NextResponse.json(
+				{ error: "Transaksi tidak ditemukan" },
+				{ status: 404 },
+			)
+		const { checkedTransaction } = await import("@/lib/finance-server")
+		data = await checkedTransaction({
+			...existing.rows[0],
+			date: String(existing.rows[0].date).slice(0, 10),
+			...(await req.json()),
+		})
+	} catch (error) {
+		return NextResponse.json(
+			{ error: error instanceof Error ? error.message : "Data tidak valid" },
+			{ status: 400 },
+		)
+	}
+	try {
 		await db.execute({
-			sql: `
-        UPDATE transactions 
-        SET description = ?, amount = ?, type = ?, category_id = ?, date = ?, include_in_budget = ?, updated_at = datetime('now', '+7 hours')
-        WHERE id = ?
-      `,
+			sql: "UPDATE transactions SET description=?,amount=?,type=?,category_id=?,date=?,notes=?,include_in_budget=?,updated_at=datetime('now','+7 hours') WHERE id=?",
 			args: [
-				description,
-				amount,
-				type,
-				category_id,
-				date,
-				Number(include_in_budget ?? 1),
+				data.description,
+				data.amount,
+				data.type,
+				data.category_id,
+				data.date,
+				data.notes,
+				data.include_in_budget,
 				id,
 			],
 		})
-
 		return NextResponse.json({ success: true })
-	} catch (error) {
-		console.error("PATCH Transaction Error:", error)
+	} catch {
 		return NextResponse.json(
 			{ error: "Gagal memperbarui transaksi" },
 			{ status: 500 },

@@ -13,9 +13,9 @@ export async function POST(request: Request) {
 
 		// Return the results for confirmation (No DB insert yet)
 		return NextResponse.json({ scanResult })
-	} catch (error: any) {
+	} catch (error) {
 		return NextResponse.json(
-			{ error: error.message || "Failed to scan receipt" },
+			{ error: error instanceof Error ? error.message : "Gagal membaca struk" },
 			{ status: 500 },
 		)
 	}

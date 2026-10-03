@@ -10,6 +10,7 @@ import { getJakartaISODate } from "@/lib/date-utils"
 export async function POST(req: NextRequest) {
 	try {
 		const { message } = await req.json()
+		if (typeof message !== "string" || !message.trim() || message.length > 2000) return NextResponse.json({ error: "Pesan harus berisi 1–2000 karakter" }, { status: 400 })
 		const today = getJakartaISODate()
 
 		// 1. Update Daily Stats (Chat Used)
@@ -23,55 +24,27 @@ export async function POST(req: NextRequest) {
 			console.error("Failed to update daily stats:", e)
 		}
 
-		// 2. Fetch Settings for Budget & Cycle
-		const settingsRes = await db.execute("SELECT key, value FROM settings")
-		const settings: { [key: string]: string } = {}
-		settingsRes.rows.forEach((row: any) => {
-			settings[row.key] = row.value
-		})
-
-		const salaryDay = Number(settings.salary_day || "25")
-		const budget = Number(settings.monthly_budget || "0")
-
-		// Calculate Cycle Start (same as charts API)
-		const [todayY, todayM, todayD] = today.split("-").map(Number)
-		let startYear = todayY
-		let startMonth = todayM - 1
-		if (todayD < salaryDay) {
-			startMonth -= 1
-			if (startMonth < 0) {
-				startMonth = 11
-				startYear -= 1
-			}
-		}
-		const cycleStart = `${startYear}-${String(startMonth + 1).padStart(2, "0")}-${String(salaryDay).padStart(2, "0")}`
-
-		// Fetch Net Spent for current cycle
-		const cycleRes = await db.execute({
-			sql: `
-        SELECT SUM(CASE WHEN type = 'expense' THEN amount ELSE -amount END) as spent
-        FROM transactions
-        WHERE include_in_budget = 1 AND date(date) >= ?
-      `,
-			args: [cycleStart],
-		})
-		const spent = Number(cycleRes.rows[0]?.spent || 0)
+		const { getCycle } = await import("@/lib/finance-server")
+		const { budget, spent, start, end } = await getCycle()
 
 		// 3. Detect Intent using AI
 		const intentData = await detectIntent(message)
 
 		let sql = ""
-		let periodName = intentData.label
+		const args: string[] = []
+		const days = Math.min(3660, Math.max(1, Math.trunc(Number(intentData.days) || 1)))
+		const periodName = intentData.label
 
 		// 4. Select SQL based on Intent
 		if (intentData.intent === "unclear") {
 			sql = "" // No data needed
 		} else if (intentData.intent === "largest") {
+			args.push(`-${days} days`)
 			sql = `
         SELECT t.description, t.amount, t.type, c.name as category 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        WHERE t.date >= datetime('now', '+7 hours', '-${intentData.days} days')
+        WHERE t.date >= datetime('now', '+7 hours', ?)
         ORDER BY t.amount DESC LIMIT 5
       `
 		} else if (intentData.label.toLowerCase() === "hari ini") {
@@ -100,25 +73,27 @@ export async function POST(req: NextRequest) {
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 		} else {
+			args.push(`-${days - 1} days`)
 			// Dynamic period based on days (range)
 			sql = `
         SELECT t.type, c.name as category, SUM(t.amount) as total, COUNT(*) as count 
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
-        WHERE date(t.date) >= date('now', '+7 hours', '-${intentData.days - 1} days')
+        WHERE date(t.date) >= date('now', '+7 hours', ?)
         GROUP BY t.type, c.name ORDER BY total DESC
       `
 		}
 
-		const result = sql ? await db.execute(sql) : { rows: [] }
+		const result = sql ? await db.execute({ sql, args }) : { rows: [] }
 
 		// 5. Format Summary
 		let dbSummary = `[KONTEKS_ANGGARAN]
-Siklus Gaji: ${salaryDay}-ke-${salaryDay}
+Siklus Gaji: ${start} sampai sebelum ${end}
 Limit: Rp ${budget.toLocaleString("id-ID")}
-Terpakai (Net): Rp ${spent.toLocaleString("id-ID")}
+Pengeluaran terikut anggaran: Rp ${spent.toLocaleString("id-ID")}
 Sisa Budget: Rp ${(budget - spent).toLocaleString("id-ID")}
-Status: ${spent > budget ? "OVER BUDGET" : "Aman"}\n\n`
+Pemasukan tidak menambah limit anggaran.
+Status: ${budget <= 0 ? "Anggaran belum diatur" : spent > budget ? "OVER BUDGET" : "Dalam anggaran"}\n\n`
 
 		if (intentData.intent === "unclear") {
 			dbSummary += `[UNCLEAR]`
@@ -134,7 +109,7 @@ Status: ${spent > budget ? "OVER BUDGET" : "Aman"}\n\n`
 				let totalExpense = 0
 				let totalIncome = 0
 				let breakdown = "Kategori:\n"
-				result.rows.forEach((row: any) => {
+				result.rows.forEach((row) => {
 					if (intentData.intent === "largest") {
 						breakdown += `- ${row.category}: Rp ${Number(row.amount).toLocaleString("id-ID")} (${row.description || "Tanpa deskripsi"})\n`
 					} else {
