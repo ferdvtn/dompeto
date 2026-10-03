@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useId, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { FormPanel } from "@/components/form-panel"
 import {
@@ -54,7 +54,7 @@ function Detail({
 		date: tx.date.slice(0, 10),
 		notes: tx.notes || "",
 	})
-	const id = useId()
+	const formRef = useRef<HTMLFormElement>(null)
 	useEffect(() => {
 		const controller = new AbortController()
 		api<Category[]>("/api/categories", { signal: controller.signal })
@@ -103,13 +103,17 @@ function Detail({
 			footer={
 				editing ? (
 					<>
-						<button className="btn" disabled={busy} onClick={close}>
+						<button type="button" className="btn" disabled={busy} onClick={close}>
 							Batal
 						</button>
 						<button
+							key="save"
+							type="button"
 							className="btn primary"
-							form={id}
-							disabled={busy || !categories.length}
+							disabled={busy || !dirty || !categories.length}
+							onClick={() => {
+								if (formRef.current?.reportValidity()) void perform()
+							}}
 						>
 							{busy ? "Menyimpan…" : "Simpan perubahan"}
 						</button>
@@ -117,13 +121,19 @@ function Detail({
 				) : (
 					<>
 						<button
+							type="button"
 							className="btn danger"
 							disabled={busy}
 							onClick={() => perform(true)}
 						>
 							Hapus
 						</button>
-						<button className="btn primary" onClick={() => setEditing(true)}>
+						<button
+							key="edit"
+							type="button"
+							className="btn primary"
+							onClick={() => setEditing(true)}
+						>
 							Edit transaksi
 						</button>
 					</>
@@ -136,13 +146,7 @@ function Detail({
 				</p>
 			)}
 			{editing ? (
-				<form
-					id={id}
-					onSubmit={(e) => {
-						e.preventDefault()
-						void perform()
-					}}
-				>
+				<form ref={formRef} onSubmit={(e) => e.preventDefault()}>
 					<fieldset disabled={busy}>
 						<TransactionFields
 							value={draft}
