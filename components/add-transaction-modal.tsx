@@ -176,7 +176,10 @@ export function AddTransactionModal({
 					include_in_budget: includeInBudget ? 1 : 0,
 				}),
 			})
-			if (!res.ok) throw new Error("Gagal menyimpan transaksi")
+			if (!res.ok) {
+				const data = await res.json().catch(() => null)
+				throw new Error(data?.error || `Gagal menyimpan transaksi (${res.status})`)
+			}
 			toast.success("Transaksi berhasil dicatat")
 			setIsOpen(false)
 			resetForm()

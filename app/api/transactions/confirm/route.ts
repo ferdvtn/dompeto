@@ -58,18 +58,22 @@ export async function POST(req: NextRequest) {
 			],
 		})
 
-		// 3. Update Daily Stats
-		const today = getJakartaISODate()
-		await db.execute({
-			sql: `
+		// Stats are auxiliary: a stats failure must not report a saved transaction as failed.
+		try {
+			const today = getJakartaISODate()
+			await db.execute({
+				sql: `
         INSERT INTO daily_stats (date, transaction_count, total_spent)
         VALUES (?, 1, ?)
         ON CONFLICT(date) DO UPDATE SET
           transaction_count = transaction_count + 1,
           total_spent = total_spent + EXCLUDED.total_spent
       `,
-			args: [today, type === "expense" ? amount : 0],
-		})
+				args: [today, type === "expense" ? amount : 0],
+			})
+		} catch (error) {
+			console.error("Transaction saved, but daily stats update failed:", error)
+		}
 
 		return NextResponse.json(result.rows[0], { status: 201 })
 	} catch (error) {

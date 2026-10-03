@@ -57,7 +57,7 @@ ATURAN PARSING:
 				{ role: "system", content: systemInstruction },
 				{ role: "user", content: rawInput },
 			],
-			model: "llama-3.3-70b-versatile",
+			model: "openai/gpt-oss-120b",
 			response_format: { type: "json_object" },
 		})
 
@@ -125,7 +125,7 @@ FORMAT OUTPUT (JSON):
 				{ role: "system", content: systemInstruction },
 				{ role: "user", content: message },
 			],
-			model: "llama-3.1-8b-instant",
+			model: "openai/gpt-oss-20b",
 			response_format: { type: "json_object" },
 			temperature: 0,
 		})
@@ -173,7 +173,7 @@ ${dbSummary}
 				{ role: "system", content: systemInstruction },
 				{ role: "user", content: userMessage },
 			],
-			model: "llama-3.3-70b-versatile",
+			model: "openai/gpt-oss-120b",
 		})
 
 		return (

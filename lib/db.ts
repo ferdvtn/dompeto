@@ -1,4 +1,4 @@
-import { createClient } from "@libsql/client"
+import { createClient } from "@libsql/client/web"
 
 const url =
 	process.env.TURSO_DATABASE_URL || "libsql://build-placeholder.turso.io"
